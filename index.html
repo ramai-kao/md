@@ -69,17 +69,18 @@ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOStr
 // penyimpanan lokal (IndexedDB)
 const db=new Promise((res,rej)=>{const r=indexedDB.open('antar',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const kv={get:k=>db.then(d=>new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result)})),
- set:(k,v)=>db.then(d=>new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r}))};
-let S={username:'',user:null,invoice:[],rekap:[],ap:[],ab:[],dl:'',ob:{},up:null,tab:'tugas',bulan:'',pn:0};
+ set:(k,v)=>db.then(d=>new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r})),
+ del:k=>db.then(d=>new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=r}))};
+let S={username:'',user:null,invoice:[],rekap:[],ap:[],ab:[],dl:'',ob:{},up:null,tab:'tugas',bulan:'',pn:0,fq:[]};
 const save=()=>kv.set('S',S);
 
 // UI helper
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',4500)}
 const busy=b=>$('#busy').style.display=b?'flex':'none';
-function ask(title,fs){return new Promise(r=>{const d=$('#dlg');
- d.innerHTML=`<form method="dialog"><h3 style="margin:0 0 4px">${title}</h3>${fs.map(f=>f.opts
+function ask(title,fs,msg){return new Promise(r=>{const d=$('#dlg');
+ d.innerHTML=`<form method="dialog"><h3 style="margin:0 0 4px">${title}</h3>${msg?`<div class="m">${msg}</div>`:''}${fs.map(f=>f.opts
  ?`<label>${f.l}<select name="${f.n}">${f.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select></label>`
- :`<label>${f.l}<input name="${f.n}" type="${f.t||'text'}" ${f.t=='password'?'inputmode="numeric" maxlength="4" pattern="[0-9]{4}"':''} required autocomplete="off"></label>`).join('')}
+ :f.t=='file'?`<label>${f.l}<input name="${f.n}" type="file" accept="image/*" capture="environment"></label>`:`<label>${f.l}<input name="${f.n}" type="${f.t||'text'}" ${f.t=='password'?'inputmode="numeric" maxlength="4" pattern="[0-9]{4}"':''} required autocomplete="off"></label>`).join('')}
  <div class="row"><button value="cancel" formnovalidate>Batal</button><button value="ok" class="pri">OK</button></div></form>`;
  d.returnValue='';d.onclose=()=>{const o={};if(d.returnValue==='ok')new FormData(d.querySelector('form')).forEach((v,k)=>o[k]=v);r(d.returnValue==='ok'?o:null)};d.showModal()})}
 
@@ -94,9 +95,16 @@ async function api(p){const c=new AbortController(),t=setTimeout(()=>c.abort(),3
 const eff=i=>S.ob[i.invoice_no]?S.ob[i.invoice_no].status:i.status;
 const nOb=()=>Object.keys(S.ob).length;
 async function st(no,status){const i=S.invoice.find(x=>x.invoice_no===no);if(!i)return;let alasan='';
+ if(status==='TERANTAR'){const o=await ask('Benar sudah terantar?',[{n:'foto',l:'📷 Foto bukti (boleh dikosongkan)',t:'file'}],esc(i.pelanggan)+'<br>'+esc(no)+' · '+rp(i.nominal));if(!o)return;
+  let f=0;if(o.foto&&o.foto.size){try{await kv.set('foto:'+no,await kecil(o.foto));f=1}catch(e){toast('Foto gagal diproses, dilanjutkan tanpa foto')}}
+  S.ob[no]={status,alasan:'',tgl:today(),bv:i.versi,f};await save();render();return}
  if(status!=='TERANTAR'){const o=await ask(status==='PENDING'?'Alasan Pending (antar besok)':'Alasan Batal (kembali ke gudang)',[{n:'a',l:'Pilih alasan',opts:status==='PENDING'?S.ap:S.ab}]);if(!o)return;alasan=o.a}
  S.ob[no]={status,alasan,tgl:today(),bv:i.versi};await save();render()}
-async function undo(no){delete S.ob[no];await save();render()}
+const kecil=f=>new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const s=Math.min(1,1024/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.7))};im.onerror=rej;im.src=u});
+async function flushFoto(pin){let n=0;for(const no of [...S.fq]){const f=await kv.get('foto:'+no);
+  if(f){try{await api({action:'uploadFoto',username:S.username,pin,invoice_no:no,foto:f})}catch(e){if(!e.srv)break}}
+  await kv.del('foto:'+no);S.fq=S.fq.filter(x=>x!==no);n++}await save();return n}
+async function undo(no){kv.del('foto:'+no);delete S.ob[no];await save();render()}
 
 async function doDownload(pin){const d=await api({action:'download',username:S.username,pin});
  if(d.user.role!=='SUPIR'&&d.user.role!=='GUDANG'){toast('Akun ini tidak dapat dipakai di aplikasi HP.');return}
@@ -109,15 +117,16 @@ async function download(){if(nOb()&&!confirm('Ada perubahan yang belum diupload.
 
 async function upload(){
  const items=Object.keys(S.ob).map(no=>{const o=S.ob[no];return isG()?{invoice_no:no,op:o.op,kode_supir:o.kode,alasan:o.alasan,base_versi:o.bv}:{invoice_no:no,status:o.status,alasan:o.alasan,tgl_antar:o.tgl,base_versi:o.bv}});
- if(!items.length)return toast('Tidak ada perubahan untuk diupload');
+ if(!items.length){if(!S.fq.length)return toast('Tidak ada perubahan untuk diupload');const q=await ask('Kirim '+S.fq.length+' foto tertunda',[{n:'pin',l:'PIN 4 digit',t:'password'}]);if(!q)return;busy(1);try{const n=await flushFoto(q.pin);toast(n+' foto diproses')}catch(e){toast(e.message)}busy(0);return}
  const o=await ask('Upload '+items.length+' perubahan',[{n:'pin',l:'PIN 4 digit',t:'password'}]);if(!o)return;
  const sig=JSON.stringify(items);
  if(!S.up||S.up.sig!==sig)S.up={sig,id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random())};
  await save();busy(1);
  try{const r=await api({action:'upload',username:S.username,pin:o.pin,uploadId:S.up.id,items});const bad=[];
-  r.results.forEach(x=>{delete S.ob[x.invoice_no];const i=S.invoice.find(v=>v.invoice_no===x.invoice_no);if(!i)return;
+  r.results.forEach(x=>{const o0=S.ob[x.invoice_no];delete S.ob[x.invoice_no];if(o0&&o0.f){if(x.result==='OK'&&x.status==='TERANTAR')S.fq.push(x.invoice_no);else kv.del('foto:'+x.invoice_no)}const i=S.invoice.find(v=>v.invoice_no===x.invoice_no);if(!i)return;
    if(x.result==='OK'){i.status=x.status;i.versi=x.versi;delete i.note}else{i.note=x.result+': '+x.message;bad.push(x)}});
   S.up=null;await save();render();
+  if(S.fq.length){try{await flushFoto(o.pin)}catch(e){}}
   if(bad.length)toast(bad.length+' invoice ditolak/konflik (lihat catatan merah). Silakan Download ulang.');
   else{toast('Upload berhasil');try{await doDownload(o.pin)}catch(e){}}
  }catch(e){toast(e.message)}busy(0)}
@@ -177,7 +186,7 @@ const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.fil
 
 // tampilan
 function card(i){const e=eff(i),o=S.ob[i.invoice_no],a=ACT.includes(i.status),n=esc(i.invoice_no),al=o?o.alasan:(e!=='TERANTAR'?i.alasan:'');
- return `<div class="card ${e}"><div class="top"><b>${esc(i.pelanggan)}</b><span class="chip">${LBL[e]||e}${o?' •':''}</span></div>
+ return `<div class="card ${e}"><div class="top"><b>${esc(i.pelanggan)}</b><span class="chip">${LBL[e]||e}${o?(o.f?' 📷':'')+' •':''}</span></div>
  <div class="m">${n} · ${esc(i.tanggal)}${i.salesman?' · '+esc(i.salesman):''}</div><div class="amt">${rp(i.nominal)}</div>
  ${al?`<div class="m">Alasan: ${esc(al)}</div>`:''}${i.note?`<div class="err">${esc(i.note)}</div>`:''}
  ${a?(o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`

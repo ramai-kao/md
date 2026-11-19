@@ -51,6 +51,9 @@ dialog input,dialog select{width:100%;padding:12px;font-size:17px;margin-top:4px
 .row{display:flex;gap:8px;margin-top:12px}.row button{flex:1;padding:12px;border-radius:8px;border:1px solid var(--b);background:none;color:var(--t)}.row .pri{background:var(--p);color:#fff;border:0}
 #toast{position:fixed;left:12px;right:12px;bottom:76px;background:#222;color:#fff;padding:12px;border-radius:8px;display:none;z-index:20}
 #busy{position:fixed;inset:0;background:#0008;color:#fff;display:none;align-items:center;justify-content:center;z-index:30;font-size:18px}
+.chk{width:22px;height:22px;margin:2px 10px 0 0}.top{align-items:flex-start}
+.sbar{position:fixed;left:0;right:0;bottom:50px;z-index:6;display:flex;gap:8px;align-items:center;background:var(--c);border-top:1px solid var(--b);padding:8px 12px}
+.sbar span{flex:1;font-weight:600}.sbar button{padding:10px 14px;border-radius:8px;border:1px solid var(--b);background:none;color:var(--t);font-weight:600}.sbar .pri{background:var(--p);color:#fff;border:0}
 </style></head><body>
 <div id="app"></div><nav id="nav"></nav><dialog id="dlg"></dialog><div id="toast"></div><div id="busy">Memproses…</div>
 <script>
@@ -96,8 +99,8 @@ async function st(no,status){const i=S.invoice.find(x=>x.invoice_no===no);if(!i)
 async function undo(no){delete S.ob[no];await save();render()}
 
 async function doDownload(pin){const d=await api({action:'download',username:S.username,pin});
- if(d.user.role!=='SUPIR'){toast('Akun ini bukan akun supir. Aplikasi gudang menyusul di tahap berikutnya.');return}
- S.user=d.user;S.invoice=d.invoice;S.rekap=d.rekap;S.ap=d.alasan_pending;S.ab=d.alasan_batal;S.dl=d.server_time;S.pn=d.invoice.length;
+ if(d.user.role!=='SUPIR'&&d.user.role!=='GUDANG'){toast('Akun ini tidak dapat dipakai di aplikasi HP.');return}
+ S.supir=d.supir_aktif||[];SEL.clear();S.user=d.user;S.invoice=d.invoice;S.rekap=d.rekap;S.ap=d.alasan_pending;S.ab=d.alasan_batal;S.dl=d.server_time;S.pn=d.invoice.length;
  Object.keys(S.ob).forEach(no=>{const i=S.invoice.find(x=>x.invoice_no===no);if(!i||i.versi!==S.ob[no].bv)delete S.ob[no]});
  await save();render()}
 async function download(){if(nOb()&&!confirm('Ada perubahan yang belum diupload. Download akan menjaga perubahan yang masih valid. Lanjutkan?'))return;
@@ -105,7 +108,7 @@ async function download(){if(nOb()&&!confirm('Ada perubahan yang belum diupload.
  busy(1);try{await doDownload(o.pin);toast('Download berhasil: '+S.invoice.length+' invoice')}catch(e){toast(e.message)}busy(0)}
 
 async function upload(){
- const items=Object.keys(S.ob).map(no=>({invoice_no:no,status:S.ob[no].status,alasan:S.ob[no].alasan,tgl_antar:S.ob[no].tgl,base_versi:S.ob[no].bv}));
+ const items=Object.keys(S.ob).map(no=>{const o=S.ob[no];return isG()?{invoice_no:no,op:o.op,kode_supir:o.kode,alasan:o.alasan,base_versi:o.bv}:{invoice_no:no,status:o.status,alasan:o.alasan,tgl_antar:o.tgl,base_versi:o.bv}});
  if(!items.length)return toast('Tidak ada perubahan untuk diupload');
  const o=await ask('Upload '+items.length+' perubahan',[{n:'pin',l:'PIN 4 digit',t:'password'}]);if(!o)return;
  const sig=JSON.stringify(items);
@@ -132,6 +135,46 @@ const months=()=>[...new Set([today().slice(0,7),...S.rekap.map(r=>r.tanggal.sli
 function mb(k){S.bulan=months()[k];render()}
 const tab=t=>{S.tab=t;render()};
 
+// ===== GUDANG =====
+const SEL=new Set(),GL={BARU:'Baru',DITERIMA:'Diterima'};
+const isG=()=>S.user&&S.user.role==='GUDANG';
+const gi=no=>S.invoice.find(i=>i.invoice_no===no);
+const canA=i=>i.status!=='BATAL_SUPIR'&&(!S.ob[i.invoice_no]||S.ob[i.invoice_no].op==='TERIMA');
+const opL=o=>({TERIMA:'✓ Diterima',TUGASKAN:'→ '+o.nm,TUGASKAN_ULANG:'→ '+o.nm+' (ulang)',BATAL_TOTAL:'🚫 Batal total'}[o.op]);
+function tg(no){SEL.has(no)?SEL.delete(no):SEL.add(no);render()}
+function pilihSemua(){const L=S.invoice.filter(canA),all=L.every(i=>SEL.has(i.invoice_no));L.forEach(i=>all?SEL.delete(i.invoice_no):SEL.add(i.invoice_no));render()}
+async function pilihSupir(t){if(!S.supir.length){toast('Daftar supir kosong. Download dulu.');return null}
+ const o=await ask(t,[{n:'s',l:'Pilih supir (hanya yang Aktif)',opts:S.supir.map(s=>s.kode+' - '+s.nama)}]);if(!o)return null;
+ const k=o.s.split(' - ');return{kode:k[0],nm:k.slice(1).join(' - ')}}
+async function gTerima(){const L=[...SEL].map(gi).filter(i=>i&&i.status==='BARU'&&!S.ob[i.invoice_no]);
+ if(!L.length)return toast('Pilih invoice berstatus Baru');
+ L.forEach(i=>S.ob[i.invoice_no]={op:'TERIMA',bv:i.versi});SEL.clear();await save();render()}
+async function gTugas(){const L=[...SEL].map(gi).filter(i=>i&&canA(i));if(!L.length)return toast('Pilih invoice dulu');
+ const s=await pilihSupir('Tugaskan '+L.length+' invoice');if(!s)return;
+ L.forEach(i=>S.ob[i.invoice_no]={op:'TUGASKAN',kode:s.kode,nm:s.nm,bv:i.versi});SEL.clear();await save();render()}
+async function gRetur(no,op){const i=gi(no);if(!i)return;
+ if(op==='TUGASKAN_ULANG'){const s=await pilihSupir('Tugaskan ulang ke');if(!s)return;S.ob[no]={op,kode:s.kode,nm:s.nm,bv:i.versi}}
+ else{const o=await ask('Batal total',[{n:'a',l:'Alasan',opts:S.ab}]);if(!o)return;S.ob[no]={op,alasan:o.a,bv:i.versi}}
+ await save();render()}
+function gcard(i){const o=S.ob[i.invoice_no],n=esc(i.invoice_no),ret=i.status==='BATAL_SUPIR';
+ return `<div class="card ${ret?'BATAL_SUPIR':i.status}"><div class="top">${!ret&&canA(i)?`<input type="checkbox" class="chk" ${SEL.has(i.invoice_no)?'checked':''} onchange="tg('${n}')">`:''}
+ <div style="flex:1"><b>${esc(i.pelanggan)}</b><div class="m">${n} · ${esc(i.tanggal)}${i.salesman?' · '+esc(i.salesman):''}</div></div><span class="chip">${o?opL(o)+' •':(ret?'Retur':GL[i.status])}</span></div>
+ <div class="amt">${rp(i.nominal)}</div>${ret?`<div class="m">Dari ${esc(i.retur_dari)} · Alasan: ${esc(i.alasan)}</div>`:''}${i.note?`<div class="err">${esc(i.note)}</div>`:''}
+ ${o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`:ret?`<div class="acts"><button class="ok" onclick="gRetur('${n}','TUGASKAN_ULANG')">Tugaskan ulang</button><button class="rd" onclick="gRetur('${n}','BATAL_TOTAL')">Batal total</button></div>`:''}</div>`}
+const banG=()=>S.pn>S.invoice.length?`<div class="ban">📦 Ada invoice baru/retur di server (${S.pn}). Silakan <b>Download</b>.</div>`:'';
+function vInv(){const L=S.invoice.filter(i=>i.status!=='BATAL_SUPIR');
+ if(!L.length)return banG()+'<div class="empty">Tidak ada invoice baru.<br>Tekan <b>Download</b> saat online.</div>';
+ return banG()+`<div class="bar"><b>${L.length} invoice</b><button onclick="pilihSemua()">Pilih semua</button></div>`+L.map(gcard).join('')}
+function vRetur(){const L=S.invoice.filter(i=>i.status==='BATAL_SUPIR');return banG()+(L.length?L.map(gcard).join(''):'<div class="empty">Tidak ada invoice retur.</div>')}
+function vGrekap(){const t=today(),A={};S.supir.forEach(s=>A[s.kode]={n:s.nama,h:0,q:0,v:0});
+ S.rekap.forEach(r=>{const a=A[r.kode_supir]=A[r.kode_supir]||{n:r.nama,h:0,q:0,v:0};if(r.tanggal===t)a.h+=r.qty;a.q+=r.qty;a.v+=r.nilai});
+ const K=Object.keys(A).sort(),T=K.reduce((a,k)=>({h:a.h+A[k].h,q:a.q+A[k].q,v:a.v+A[k].v}),{h:0,q:0,v:0});
+ return `<table><thead><tr><th>Supir</th><th>Hari ini</th><th>Bulan ini</th><th>Nilai (Rp)</th></tr></thead><tbody>${K.map(k=>`<tr><td>${esc(A[k].n)}</td><td>${A[k].h}</td><td>${A[k].q}</td><td>${A[k].v.toLocaleString('id-ID')}</td></tr>`).join('')}</tbody>
+ <tfoot><tr><td>TOTAL</td><td>${T.h}</td><td>${T.q}</td><td>${T.v.toLocaleString('id-ID')}</td></tr></tfoot></table><p class="m">Qty = invoice Terantar. Diperbarui saat Download (${esc(S.dl||'belum pernah')}).</p>`}
+const sbar=()=>isG()&&S.tab==='inv'&&SEL.size?`<div style="height:60px"></div><div class="sbar"><span>${SEL.size} dipilih</span><button onclick="gTerima()">Terima</button><button class="pri" onclick="gTugas()">Tugaskan…</button></div>`:'';
+const vBody=()=>isG()?{inv:vInv,retur:vRetur,grekap:vGrekap,akun:vAkun}[S.tab]():S.tab==='rekap'?vRekap():S.tab==='akun'?vAkun():vTugas();
+const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.filter(i=>i.status==='BATAL_SUPIR').length?' ('+S.invoice.filter(i=>i.status==='BATAL_SUPIR').length+')':'')],['grekap','📊 Rekap'],['akun','👤 Akun']]:[['tugas','📋 Tugas'],['rekap','📊 Rekap'],['akun','👤 Akun']];
+
 // tampilan
 function card(i){const e=eff(i),o=S.ob[i.invoice_no],a=ACT.includes(i.status),n=esc(i.invoice_no),al=o?o.alasan:(e!=='TERANTAR'?i.alasan:'');
  return `<div class="card ${e}"><div class="top"><b>${esc(i.pelanggan)}</b><span class="chip">${LBL[e]||e}${o?' •':''}</span></div>
@@ -156,18 +199,18 @@ function vRekap(){const ms=months(),b=ms.includes(S.bulan)?S.bulan:ms[0],k=ms.in
  </tbody><tfoot><tr><td>TOTAL</td><td>${q}</td><td>${v.toLocaleString('id-ID')}</td></tr></tfoot></table>
  <p class="m">Hanya invoice Terantar. Diperbarui saat Download/Upload (${esc(S.dl||'belum pernah')}).</p>`}
 
-function vAkun(){return `<div class="box"><b>${esc(S.user?S.user.nama:'-')}</b><div class="m">Username: ${esc(S.username)}${S.user?' · Kode: '+esc(S.user.kode_supir):''}</div>
+function vAkun(){return `<div class="box"><b>${esc(S.user?S.user.nama:'-')}</b><div class="m">Username: ${esc(S.username)}${S.user&&S.user.kode_supir?' · Kode: '+esc(S.user.kode_supir):''}</div>
  <div class="m">Download terakhir: ${esc(S.dl||'belum pernah')}</div><div class="m">Belum diupload: ${nOb()} perubahan</div>
  <button onclick="gantiPin()">🔑 Ganti PIN</button><button onclick="gantiAkun()">Ganti akun</button></div>`}
 
-function render(){const A=$('#app'),N=$('#nav');
+function render(){const A=$('#app'),N=$('#nav'),y=scrollY;if(!TABS().some(t=>t[0]===S.tab))S.tab=TABS()[0][0];
  if(!S.username){N.innerHTML='';A.innerHTML=`<main><div class="box"><h3 style="margin-top:0">Selamat datang</h3><label>Masukkan username Anda (dari admin)<input id="un" style="width:100%;padding:12px;font-size:17px;margin-top:6px" autocapitalize="none" autocomplete="off"></label><div class="row"><button class="pri" onclick="setUser()">Simpan</button></div></div></main>`;return}
  const on=navigator.onLine,n=nOb();
  A.innerHTML=`<header><div class="r1"><b>${esc(S.user?S.user.nama:S.username)}</b><span><span class="dot ${on?'on':''}"></span>${on?'Online':'Offline'}</span></div>
  <div class="hb"><button onclick="download()">⬇ Download</button><button onclick="upload()">⬆ Upload${n?' ('+n+')':''}</button></div>
  <small>${n?n+' perubahan belum diupload':'Semua perubahan sudah terupload'}</small></header>
- <main>${S.tab==='rekap'?vRekap():S.tab==='akun'?vAkun():vTugas()}</main>`;
- N.innerHTML=[['tugas','📋 Tugas'],['rekap','📊 Rekap'],['akun','👤 Akun']].map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="tab('${k}')">${l}</button>`).join('')}
+ <main>${vBody()}</main>${sbar()}`;
+ N.innerHTML=TABS().map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="tab('${k}')">${l}</button>`).join('');scrollTo(0,y)}
 
 addEventListener('online',()=>{render();ping()});addEventListener('offline',render);
 (async()=>{const s=await kv.get('S');if(s)S={...S,...s};render();ping();

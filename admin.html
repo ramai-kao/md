@@ -40,8 +40,8 @@ dialog{border:0;border-radius:16px;width:400px;padding:20px;background:var(--c);
 .row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer;font-weight:600}.row .pri{background:var(--p);color:#fff;border:0}
 #toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;display:none}
 </style></head><body>
-<div id="login"><h2>Delivery Systemr</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
-<div id="app" hidden><aside><div class="brand"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#2bb3b0"/><path d="M8 12l8-4 8 4v9l-8 4-8-4zM8 12l8 4 8-4M16 16v9" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>Antar Invoice</div><div id="nav"></div><p class="who" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
+<div id="login"><h2>Delivery System</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
+<div id="app" hidden><aside><div class="brand"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#2bb3b0"/><path d="M8 12l8-4 8 4v9l-8 4-8-4zM8 12l8 4 8-4M16 16v9" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>Delivery System</div><div id="nav"></div><p class="who" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
 <dialog id="dlg"></dialog><div id="toast"></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';

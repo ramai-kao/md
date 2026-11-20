@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin - Delivery System</title>
+<!-- Ganti API_URL dengan URL Web App yang sama seperti index.html. Upload file ini ke folder yang sama di GitHub, buka .../admin.html -->
+<style>
+:root{--bg:#f4f6f9;--c:#fff;--t:#1d2733;--m:#667788;--p:#1a73e8;--b:#dde3ea;--ok:#188038;--w:#e37400;--r:#d93025}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--c:#1a222b;--t:#e8edf2;--m:#9aa7b4;--b:#2b3744}}
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+#app{display:flex;min-height:100vh}aside{width:190px;background:var(--c);border-right:1px solid var(--b);padding:14px;position:sticky;top:0;height:100vh}
+aside h3{margin:0 0 14px}aside button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--t);padding:10px;border-radius:8px;font-size:14px;cursor:pointer}
+aside button.on{background:var(--p);color:#fff}main{flex:1;padding:18px;min-width:0}
+.card,.box{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.cards b{display:block;font-size:24px}.cards small{color:var(--m)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:14px}.bar label{font-size:12px;color:var(--m)}
+input,select,button{font:inherit}input,select{padding:7px;border:1px solid var(--b);border-radius:6px;background:var(--c);color:var(--t);display:block}
+button.b{padding:8px 12px;border:1px solid var(--b);border-radius:6px;background:var(--c);color:var(--t);cursor:pointer}button.pri{background:var(--p);color:#fff;border:0}
+.tw{overflow:auto;border:1px solid var(--b);border-radius:10px;background:var(--c)}
+table{border-collapse:collapse;width:100%}th,td{padding:7px 10px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}th{background:var(--bg);position:sticky;top:0}
+td.n,th.n{text-align:right}.chip{padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg)}
+.TERANTAR{color:var(--ok)}.PENDING{color:var(--w)}.BATAL_SUPIR,.BATAL_TOTAL{color:var(--r)}
+.m{color:var(--m)}#login{max-width:320px;margin:12vh auto}#login input{width:100%;margin:6px 0 12px}
+dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
+.row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer}.row .pri{background:var(--p);color:#fff;border:0}
+#toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;display:none}
+</style></head><body>
+<div id="login"><h2>Admin / Supervisor</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
+<div id="app" hidden><aside><h3>Antar Invoice</h3><div id="nav"></div><p class="m" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
+<dialog id="dlg"></dialog><div id="toast"></div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rp=n=>Number(n).toLocaleString('id-ID');
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const ago=n=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4-n*864e5).toISOString().slice(0,10);
+const ST=['BARU','DITERIMA','DITUGASKAN','PENDING','TERANTAR','BATAL_SUPIR','BATAL_TOTAL'];
+let TK=sessionStorage.getItem('tk')||'',ME=JSON.parse(sessionStorage.getItem('me')||'null');
+let D={rows:[],supir:[],batas:7},F={dari:ago(7),sampai:today(),status:'',supir:'',q:''},tab='dash',REK=[],RB=today().slice(0,7),USR=[];
+
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',4500)}
+async function api(a,p={}){try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:a,token:TK,...p})});
+ const j=await r.json();if(!j.ok){if(j.code==='SESSION')logout();throw Object.assign(new Error(j.message),{srv:1})}return j.data}
+ catch(e){if(e.srv)throw e;throw new Error('Tidak bisa terhubung ke server')}}
+function ask(title,fs,msg){return new Promise(r=>{const d=$('#dlg');
+ d.innerHTML=`<form method="dialog"><h3 style="margin:0">${title}</h3>${msg?`<p class="m">${msg}</p>`:''}${fs.map(f=>f.opts?`<label>${f.l}<select name="${f.n}">${f.opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join('')}</select></label>`:`<label>${f.l}<input name="${f.n}" type="${f.t||'text'}" required autocomplete="off"></label>`).join('')}<div class="row"><button value="cancel" formnovalidate>Batal</button><button value="ok" class="pri">OK</button></div></form>`;
+ d.returnValue='';d.onclose=()=>{const o={};if(d.returnValue==='ok')new FormData(d.querySelector('form')).forEach((v,k)=>o[k]=v);r(d.returnValue==='ok'?o:null)};d.showModal()})}
+function csv(name,head,rows){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const b=new Blob(['\ufeff'+[head,...rows].map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click()}
+
+async function login(){$('#le').textContent='';try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'adminLogin',username:$('#lu').value,password:$('#lp').value})});
+ const j=await r.json();if(!j.ok)throw new Error(j.message);TK=j.data.token;ME=j.data.user;sessionStorage.setItem('tk',TK);sessionStorage.setItem('me',JSON.stringify(ME));start()}
+ catch(e){$('#le').textContent=e.message||'Gagal terhubung'}}
+function logout(){TK='';ME=null;sessionStorage.clear();$('#app').hidden=true;$('#login').hidden=false}
+async function start(){$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=ME.nama+' ('+ME.role+')';await load();go('dash')}
+async function load(){try{D=await api('aList',{dari:F.dari});}catch(e){toast(e.message)}}
+const sn=k=>{const s=D.supir.find(x=>x.kode===k);return s?s.nama:(k||'-')};
+const flt=()=>D.rows.filter(r=>r.tanggal>=F.dari&&r.tanggal<=F.sampai&&(!F.status||r.status===F.status)&&(!F.supir||(r.kode_supir||r.retur_dari)===F.supir)
+ &&(!F.q||(r.pelanggan+' '+r.invoice_no+' '+r.salesman).toLowerCase().includes(F.q.toLowerCase())));
+const T=[['dash','📊 Dashboard'],['inv','🧾 Invoice'],['rek','💰 Rekap Supir'],['usr','👥 User & Supir']];
+function go(t){tab=t;$('#nav').innerHTML=T.map(([k,l])=>`<button class="${k===t?'on':''}" onclick="go('${k}')">${l}</button>`).join('');draw()}
+async function draw(){const M=$('#main');
+ if(tab==='rek'){try{REK=(await api('aRekap',{bulan:RB})).rows}catch(e){toast(e.message)}}
+ if(tab==='usr'){try{USR=(await api('aUsers')).users}catch(e){toast(e.message)}}
+ M.innerHTML=({dash:vDash,inv:vInv,rek:vRek,usr:vUsr})[tab]()}
+const filterBar=(extra)=>`<div class="bar"><label>Dari<input type="date" id="fd" value="${F.dari}"></label><label>Sampai<input type="date" id="fs" value="${F.sampai}"></label>${extra||''}<button class="b pri" onclick="apply()">Terapkan</button><button class="b" onclick="syncNow()">⟳ Tarik invoice baru</button></div>`;
+async function apply(){F.dari=$('#fd').value;F.sampai=$('#fs').value;if($('#fst'))F.status=$('#fst').value;if($('#fsp'))F.supir=$('#fsp').value;if($('#fq'))F.q=$('#fq').value;await load();draw()}
+async function syncNow(){try{await api('aSync');await load();draw();toast('Invoice terbaru sudah ditarik')}catch(e){toast(e.message)}}
+
+function vDash(){const R=flt(),by=s=>R.filter(r=>r.status===s),sum=a=>a.reduce((x,r)=>x+r.nominal,0);
+ const cards=[['Total',R]].concat(ST.map(s=>[s.replace('_',' '),by(s)])).map(([l,a])=>`<div class="card"><small>${l}</small><b>${a.length}</b><small>Rp ${rp(sum(a))}</small></div>`).join('');
+ const K=[...new Set(R.map(r=>r.kode_supir||r.retur_dari).filter(Boolean))].sort();
+ const rows=K.map(k=>{const a=R.filter(r=>(r.kode_supir||r.retur_dari)===k),c=s=>a.filter(r=>r.status===s).length;
+  return `<tr><td>${esc(sn(k))}</td><td class="n">${c('DITUGASKAN')}</td><td class="n">${c('PENDING')}</td><td class="n">${c('TERANTAR')}</td><td class="n">${c('BATAL_SUPIR')}</td><td class="n">${rp(sum(a.filter(r=>r.status==='TERANTAR')))}</td></tr>`}).join('');
+ return `<h2 style="margin-top:0">Dashboard</h2>${filterBar()}<div class="cards">${cards}</div><h3>Per supir</h3><div class="tw"><table><thead><tr><th>Supir</th><th class="n">Ditugaskan</th><th class="n">Pending</th><th class="n">Terantar</th><th class="n">Retur</th><th class="n">Nilai terantar (Rp)</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="m">Tidak ada data</td></tr>'}</tbody></table></div>
+ <p class="m">Dihitung dari tanggal invoice pada rentang di atas.</p>`}
+
+function vInv(){const R=flt(),ex=`<label>Status<select id="fst"><option value="">Semua</option>${ST.map(s=>`<option ${F.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
+ <label>Supir<select id="fsp"><option value="">Semua</option>${D.supir.map(s=>`<option value="${s.kode}" ${F.supir===s.kode?'selected':''}>${esc(s.nama)}</option>`).join('')}</select></label><label>Cari<input id="fq" value="${esc(F.q)}" placeholder="toko / no / salesman"></label>`;
+ const can=D.rows.length&&['TERANTAR','PENDING','BATAL_SUPIR'];
+ return `<h2 style="margin-top:0">Invoice <small class="m">(${R.length})</small></h2>${filterBar(ex)}<div class="bar"><button class="b" onclick="expInv()">⬇ Ekspor CSV (Excel)</button></div>
+ <div class="tw"><table><thead><tr><th>Tanggal</th><th>Invoice</th><th>Toko</th><th>Salesman</th><th class="n">Nominal</th><th>Status</th><th>Supir</th><th>Tgl antar</th><th>Foto</th><th></th></tr></thead><tbody>
+ ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
+ <td>${can.includes(r.status)?`<button class="b" onclick="koreksi('${esc(r.invoice_no)}')">Koreksi</button>`:''}</td></tr>`).join('')}</tbody></table></div>${R.length>500?'<p class="m">Menampilkan 500 pertama. Persempit filter atau ekspor CSV.</p>':''}`}
+function expInv(){csv('invoice.csv',['Tanggal','Invoice','Toko','Salesman','Nominal','Status','Supir','Tgl Antar','Alasan','Foto'],flt().map(r=>[r.tanggal,r.invoice_no,r.pelanggan,r.salesman,r.nominal,r.status,sn(r.kode_supir||r.retur_dari),r.tgl_antar,r.alasan,r.foto]))}
+async function koreksi(no){const r=D.rows.find(x=>x.invoice_no===no);if(!r)return;
+ const o=await ask('Koreksi status',[{n:'ke',l:'Ubah ke',opts:['TERANTAR','PENDING','BATAL_SUPIR'].filter(s=>s!==r.status).map(s=>[s,s])},{n:'a',l:'Alasan koreksi (wajib)'}],
+  esc(r.pelanggan)+' · '+esc(no)+'<br>Status sekarang: <b>'+r.status+'</b>. Batas koreksi '+D.batas+' hari. Rekap supir disesuaikan otomatis (ke Terantar memakai tanggal ditugaskan).');
+ if(!o)return;try{await api('aKoreksi',{invoice_no:no,ke:o.ke,alasan:o.a,versi:r.versi});toast('Koreksi tersimpan');await load();draw()}catch(e){toast(e.message)}}
+
+function vRek(){const K={};REK.forEach(r=>{const a=K[r.kode]=K[r.kode]||{n:r.nama,q:0,v:0};a.q+=r.qty;a.v+=r.nilai});
+ const tq=REK.reduce((a,r)=>a+r.qty,0),tv=REK.reduce((a,r)=>a+r.nilai,0);
+ return `<h2 style="margin-top:0">Rekap Supir</h2><div class="bar"><label>Bulan<input type="month" id="rb" value="${RB}"></label><button class="b pri" onclick="RB=$('#rb').value||RB;draw()">Tampilkan</button><button class="b" onclick="expRek()">⬇ Ekspor CSV</button></div>
+ <h3>Total per supir</h3><div class="tw"><table><thead><tr><th>Supir</th><th class="n">Qty</th><th class="n">Nilai (Rp)</th></tr></thead><tbody>${Object.keys(K).sort().map(k=>`<tr><td>${esc(K[k].n)}</td><td class="n">${K[k].q}</td><td class="n">${rp(K[k].v)}</td></tr>`).join('')}</tbody><tfoot><tr><th>TOTAL</th><th class="n">${tq}</th><th class="n">${rp(tv)}</th></tr></tfoot></table></div>
+ <h3>Per hari</h3><div class="tw"><table><thead><tr><th>Tanggal</th><th>Supir</th><th class="n">Qty</th><th class="n">Nilai (Rp)</th></tr></thead><tbody>${[...REK].sort((a,b)=>a.tanggal<b.tanggal?-1:a.tanggal>b.tanggal?1:a.kode<b.kode?-1:1).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.nama)}</td><td class="n">${r.qty}</td><td class="n">${rp(r.nilai)}</td></tr>`).join('')}</tbody></table></div>`}
+function expRek(){csv('rekap_'+RB+'.csv',['Tanggal','Kode','Supir','Qty','Nilai'],REK.map(r=>[r.tanggal,r.kode,r.nama,r.qty,r.nilai]))}
+
+function vUsr(){return `<h2 style="margin-top:0">User & Supir</h2><h3>Akun login</h3><div class="tw"><table><thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
+ ${USR.map(u=>`<tr><td>${esc(u.username)}</td><td>${esc(u.nama)}</td><td>${u.role}</td><td>${u.status}${u.terkunci?' 🔒':''}</td><td>
+ ${u.role!=='SUPIR'?`<button class="b" onclick="setSt('user','${esc(u.username)}','${u.status==='Aktif'?'Nonaktif':'Aktif'}')">${u.status==='Aktif'?'Nonaktifkan':'Aktifkan'}</button> `:''}
+ <button class="b" onclick="reset('${esc(u.username)}','${u.role}')">Reset ${u.role==='ADMIN'||u.role==='SPV'?'password':'PIN'}</button></td></tr>`).join('')}</tbody></table></div>
+ <h3>Supir (MASTER_SUPIR)</h3><div class="tw"><table><thead><tr><th>Kode</th><th>Nama</th><th>Status</th><th></th></tr></thead><tbody>${D.supir.map(s=>`<tr><td>${s.kode}</td><td>${esc(s.nama)}</td><td>${s.status}</td><td><button class="b" onclick="setSt('supir','${s.kode}','${s.status==='Aktif'?'Nonaktif':'Aktif'}')">${s.status==='Aktif'?'Nonaktifkan':'Aktifkan'}</button></td></tr>`).join('')}</tbody></table></div>
+ <p class="m">Menonaktifkan supir: invoice Ditugaskan/Pending miliknya otomatis masuk Retur Gudang. Reset PIN/password juga membuka kunci akun. Menambah user/supir baru: isi langsung di sheet USERS / MASTER_SUPIR.</p>`}
+async function setSt(kind,key,status){if(!confirm(status+': '+key+'?'))return;
+ try{await api('aSetStatus',{kind,key,status});toast('Tersimpan');await load();draw()}catch(e){toast(e.message)}}
+async function reset(u,role){const adm=role==='ADMIN'||role==='SPV';const o=await ask('Reset '+(adm?'password':'PIN')+': '+esc(u),[{n:'s',l:adm?'Password baru (min. 8 karakter)':'PIN baru (4 digit)',t:'password'}]);if(!o)return;
+ try{await api('aResetSecret',{username:u,secret:o.s});toast('Berhasil direset')}catch(e){toast(e.message)}}
+$('#lp').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+if(TK&&ME)start();
+</script></body></html>

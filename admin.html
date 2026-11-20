@@ -1,47 +1,31 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Delivery System</title>
+<title>DELIVERY SYSTEM</title>
 <!-- Ganti API_URL dengan URL Web App yang sama seperti index.html. Upload file ini ke folder yang sama di GitHub, buka .../admin.html -->
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#12303a;--bg:#eaf0f1;--c:#fff;--t:#14262c;--m:#5f747b;--b:#d6e0e2;--p:#0e7c7b;--s0:#a3afb5;--s1:#7f9bb8;--s2:#3f6fb0;--s3:#e0a82e;--s4:#1b9a74;--s5:#d4553f;--s6:#7a3b3b}
-@media(prefers-color-scheme:dark){:root{--bg:#0e171b;--c:#16232a;--t:#e6eef0;--m:#93a8af;--b:#27393f;--ink:#0a1216;--p:#2bb3b0}}
-*{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;font:14px/1.45 'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--t);font-variant-numeric:tabular-nums}
-:focus-visible{outline:2px solid var(--p);outline-offset:2px}
-#app{display:flex;min-height:100vh}
-aside{width:224px;background:var(--ink);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:#fff;margin:0 6px 24px}.brand svg{width:30px;height:30px}
-#nav{flex:1}aside button{display:block;width:100%;text-align:left;border:0;background:none;color:#b9ccd1;padding:11px 12px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;margin-bottom:2px}
-aside button:hover{background:#ffffff14}aside button.on{background:#fff;color:var(--ink)}.who{font-size:12px;color:#8fa6ad;margin:0 8px 10px}
-main{flex:1;padding:26px 30px;min-width:0;max-width:1400px}
-h2.pg{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em}.sub{color:var(--m);margin:2px 0 16px}.m{color:var(--m)}
-.hero{background:var(--c);border:1px solid var(--b);border-radius:18px;padding:22px 24px;margin-bottom:16px}
-.hl{margin:0 0 4px;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
-.tape{display:flex;gap:3px;border-radius:999px;overflow:hidden;background:var(--bg)}.tape i{display:block;min-width:6px}.hero .tape{margin:16px 0}
-.legend{display:flex;flex-wrap:wrap;gap:10px 28px}.lg{min-width:110px}.lg span{display:flex;align-items:center;gap:7px;color:var(--m);font-weight:600}
-.lg i{width:10px;height:10px;border-radius:3px}.lg b{font-size:22px;display:block;line-height:1.2}.lg small{color:var(--m)}
-.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px}@media(max-width:1100px){.cols{grid-template-columns:1fr}}
-.pan{background:var(--c);border:1px solid var(--b);border-radius:18px;padding:18px 20px}.pan h3{margin:0 0 10px;font-size:16px}
-.dr{display:grid;grid-template-columns:130px 1fr 130px;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--b)}
-.dr .nm{font-weight:700}.dr small,.att small{display:block;color:var(--m);font-weight:500}.dr .nv{text-align:right;font-weight:700}
-.att{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--b)}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:14px}.bar label{font-size:12px;color:var(--m);font-weight:600}
-input,select,button{font:inherit}input,select{padding:8px 10px;border:1px solid var(--b);border-radius:10px;background:var(--c);color:var(--t);display:block}
-button.b{padding:9px 14px;border:1px solid var(--b);border-radius:10px;background:var(--c);color:var(--t);font-weight:600;cursor:pointer}button.pri{background:var(--p);color:#fff;border:0}
-.tw{overflow:auto;border:1px solid var(--b);border-radius:18px;background:var(--c)}
-table{border-collapse:collapse;width:100%}th,td{padding:9px 12px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}
-th{background:var(--c);position:sticky;top:0;color:var(--m);font-weight:600}tbody tr:hover{background:var(--bg)}td.n,th.n{text-align:right}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--bg)}
-.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--sc,#999)}
-.chip.BARU{--sc:var(--s0)}.chip.DITERIMA{--sc:var(--s1)}.chip.DITUGASKAN{--sc:var(--s2)}.chip.PENDING{--sc:var(--s3)}.chip.TERANTAR{--sc:var(--s4)}.chip.BATAL_SUPIR{--sc:var(--s5)}.chip.BATAL_TOTAL{--sc:var(--s6)}
-#login{max-width:340px;margin:12vh auto;background:var(--c);border:1px solid var(--b);border-radius:18px;padding:28px}#login input{width:100%;margin:6px 0 14px}
-dialog{border:0;border-radius:16px;width:400px;padding:20px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
-.row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer;font-weight:600}.row .pri{background:var(--p);color:#fff;border:0}
-#toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;display:none}
+:root{--bg:#f4f6f9;--c:#fff;--t:#1d2733;--m:#667788;--p:#1a73e8;--b:#dde3ea;--ok:#188038;--w:#e37400;--r:#d93025}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--c:#1a222b;--t:#e8edf2;--m:#9aa7b4;--b:#2b3744}}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+#app{display:flex;min-height:100vh}aside{width:190px;background:var(--c);border-right:1px solid var(--b);padding:14px;position:sticky;top:0;height:100vh}
+aside h3{margin:0 0 14px}aside button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--t);padding:10px;border-radius:8px;font-size:14px;cursor:pointer}
+aside button.on{background:var(--p);color:#fff}main{flex:1;padding:18px;min-width:0}
+.card,.box{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.cards b{display:block;font-size:24px}.cards small{color:var(--m)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:14px}.bar label{font-size:12px;color:var(--m)}
+input,select,button{font:inherit}input,select{padding:7px;border:1px solid var(--b);border-radius:6px;background:var(--c);color:var(--t);display:block}
+button.b{padding:8px 12px;border:1px solid var(--b);border-radius:6px;background:var(--c);color:var(--t);cursor:pointer}button.pri{background:var(--p);color:#fff;border:0}
+.tw{overflow:auto;border:1px solid var(--b);border-radius:10px;background:var(--c)}
+table{border-collapse:collapse;width:100%}th,td{padding:7px 10px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}th{background:var(--bg);position:sticky;top:0}
+td.n,th.n{text-align:right}.chip{padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg)}
+.TERANTAR{color:var(--ok)}.PENDING{color:var(--w)}.BATAL_SUPIR,.BATAL_TOTAL{color:var(--r)}
+.m{color:var(--m)}#login{max-width:320px;margin:12vh auto}#login input{width:100%;margin:6px 0 12px}
+dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
+.row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer}.row .pri{background:var(--p);color:#fff;border:0}
+#toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;display:none}
 </style></head><body>
-<div id="login"><h2>Delivery System</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
-<div id="app" hidden><aside><div class="brand"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#2bb3b0"/><path d="M8 12l8-4 8 4v9l-8 4-8-4zM8 12l8 4 8-4M16 16v9" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>Delivery System</div><div id="nav"></div><p class="who" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
+<div id="login"><h2>DELIVERY SYSTEM</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
+<div id="app" hidden><aside><h3>DELIVERY SYSTEM</h3><div id="nav"></div><p class="m" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
 <dialog id="dlg"></dialog><div id="toast"></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
@@ -51,8 +35,6 @@ const rp=n=>Number(n).toLocaleString('id-ID');
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const ago=n=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4-n*864e5).toISOString().slice(0,10);
 const ST=['BARU','DITERIMA','DITUGASKAN','PENDING','TERANTAR','BATAL_SUPIR','BATAL_TOTAL'];
-const SC={BARU:'var(--s0)',DITERIMA:'var(--s1)',DITUGASKAN:'var(--s2)',PENDING:'var(--s3)',TERANTAR:'var(--s4)',BATAL_SUPIR:'var(--s5)',BATAL_TOTAL:'var(--s6)'};
-const SL={BARU:'Baru',DITERIMA:'Diterima gudang',DITUGASKAN:'Ditugaskan',PENDING:'Pending',TERANTAR:'Terantar',BATAL_SUPIR:'Retur ke gudang',BATAL_TOTAL:'Batal total'};
 let TK=sessionStorage.getItem('tk')||'',ME=JSON.parse(sessionStorage.getItem('me')||'null');
 let D={rows:[],supir:[],batas:7},F={dari:ago(7),sampai:today(),status:'',supir:'',q:''},tab='dash',REK=[],RB=today().slice(0,7),USR=[];
 
@@ -85,25 +67,22 @@ const filterBar=(extra)=>`<div class="bar"><label>Dari<input type="date" id="fd"
 async function apply(){F.dari=$('#fd').value;F.sampai=$('#fs').value;if($('#fst'))F.status=$('#fst').value;if($('#fsp'))F.supir=$('#fsp').value;if($('#fq'))F.q=$('#fq').value;await load();draw()}
 async function syncNow(){try{await api('aSync');await load();draw();toast('Invoice terbaru sudah ditarik')}catch(e){toast(e.message)}}
 
-function tape(a,h){return `<div class="tape" style="height:${h}px">${ST.map(s=>{const c=a.filter(r=>r.status===s).length;return c?`<i style="flex:${c};background:${SC[s]}" title="${SL[s]}: ${c}"></i>`:''}).join('')}</div>`}
-function vDash(){const R=flt(),by=s=>R.filter(r=>r.status===s),sum=a=>a.reduce((x,r)=>x+r.nominal,0),done=by('TERANTAR'),pct=R.length?Math.round(done.length*100/R.length):0;
- const leg=ST.map(s=>{const a=by(s);return a.length?`<div class="lg"><span><i style="background:${SC[s]}"></i>${SL[s]}</span><b>${a.length}</b><small>Rp ${rp(sum(a))}</small></div>`:''}).join('');
+function vDash(){const R=flt(),by=s=>R.filter(r=>r.status===s),sum=a=>a.reduce((x,r)=>x+r.nominal,0);
+ const cards=[['Total',R]].concat(ST.map(s=>[s.replace('_',' '),by(s)])).map(([l,a])=>`<div class="card"><small>${l}</small><b>${a.length}</b><small>Rp ${rp(sum(a))}</small></div>`).join('');
  const K=[...new Set(R.map(r=>r.kode_supir||r.retur_dari).filter(Boolean))].sort();
- const dr=K.map(k=>{const a=R.filter(r=>(r.kode_supir||r.retur_dari)===k),t=a.filter(r=>r.status==='TERANTAR');
-  return `<div class="dr"><div class="nm">${esc(sn(k))}<small>${a.length} invoice</small></div>${tape(a,14)}<div class="nv">${t.length} terantar<small>Rp ${rp(sum(t))}</small></div></div>`}).join('');
- return `<h2 class="pg">Ringkasan pengantaran</h2><p class="sub">${F.dari===F.sampai?F.dari:F.dari+' sampai '+F.sampai}. Dihitung dari tanggal invoice.</p>${filterBar()}
- <section class="hero"><h2 class="hl">${R.length?`${done.length} dari ${R.length} invoice sudah terantar`:'Belum ada invoice pada rentang ini'}</h2><p class="m" style="margin:0">${pct}% selesai, nilai Rp ${rp(sum(done))} dari Rp ${rp(sum(R))}</p>${tape(R,26)}<div class="legend">${leg}</div></section>
- <div class="cols"><section class="pan"><h3>Progres tiap supir</h3>${dr||'<p class="m">Belum ada invoice yang ditugaskan pada rentang ini.</p>'}</section><section class="pan"><h3>Perlu ditindaklanjuti</h3>${attention()}</section></div>`}
-function attention(){const rt=D.rows.filter(r=>r.status==='BATAL_SUPIR'),P=D.rows.filter(r=>r.status==='PENDING').map(r=>({...r,h:Math.round((Date.parse(today())-Date.parse(r.tgl_tugas))/864e5)})).filter(r=>r.h>=3).sort((a,b)=>b.h-a.h);
- const it=(r,t)=>`<div class="att"><div><b>${esc(r.pelanggan)}</b><small>${esc(r.invoice_no)}, ${esc(sn(r.kode_supir||r.retur_dari))}${r.alasan?', '+esc(r.alasan):''}</small></div><div style="text-align:right"><b>${t}</b><small>Rp ${rp(r.nominal)}</small></div></div>`;
- return `<p style="margin:0 0 4px;font-weight:700">Retur menunggu gudang (${rt.length})</p>${rt.slice(0,6).map(r=>it(r,'Retur')).join('')||'<p class="m">Tidak ada.</p>'}
- <p style="margin:16px 0 4px;font-weight:700">Pending 3 hari atau lebih (${P.length})</p>${P.slice(0,6).map(r=>it(r,r.h+' hari')).join('')||'<p class="m">Tidak ada.</p>'}${rt.length>6||P.length>6?'<p class="m">Daftar lengkap ada di menu Invoice (filter status).</p>':''}`}
+ const rows=K.map(k=>{const a=R.filter(r=>(r.kode_supir||r.retur_dari)===k),c=s=>a.filter(r=>r.status===s).length;
+  return `<tr><td>${esc(sn(k))}</td><td class="n">${c('DITUGASKAN')}</td><td class="n">${c('PENDING')}</td><td class="n">${c('TERANTAR')}</td><td class="n">${c('BATAL_SUPIR')}</td><td class="n">${rp(sum(a.filter(r=>r.status==='TERANTAR')))}</td></tr>`}).join('');
+ return `<h2 style="margin-top:0">Dashboard</h2>${filterBar()}<div class="cards">${cards}</div><h3>Per supir</h3><div class="tw"><table><thead><tr><th>Supir</th><th class="n">Ditugaskan</th><th class="n">Pending</th><th class="n">Terantar</th><th class="n">Retur</th><th class="n">Nilai terantar (Rp)</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="m">Tidak ada data</td></tr>'}</tbody></table></div>
+ <p class="m">Dihitung dari tanggal invoice pada rentang di atas.</p>${pendingBox()}`}
+function pendingBox(){const P=D.rows.filter(r=>r.status==='PENDING').map(r=>({...r,h:Math.round((Date.parse(today())-Date.parse(r.tgl_tugas))/864e5)})).filter(r=>r.h>=3).sort((a,b)=>b.h-a.h);
+ return `<h3>⚠ Pending menumpuk (≥ 3 hari sejak ditugaskan): ${P.length}</h3>${P.length?`<div class="tw"><table><thead><tr><th>Invoice</th><th>Toko</th><th>Supir</th><th class="n">Hari</th><th>Alasan</th><th class="n">Nominal</th></tr></thead><tbody>${P.map(r=>`<tr><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(sn(r.kode_supir))}</td><td class="n">${r.h}</td><td>${esc(r.alasan)}</td><td class="n">${rp(r.nominal)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="m">Tidak ada.</p>'}`}
+
 function vInv(){const R=flt(),ex=`<label>Status<select id="fst"><option value="">Semua</option>${ST.map(s=>`<option ${F.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
  <label>Supir<select id="fsp"><option value="">Semua</option>${D.supir.map(s=>`<option value="${s.kode}" ${F.supir===s.kode?'selected':''}>${esc(s.nama)}</option>`).join('')}</select></label><label>Cari<input id="fq" value="${esc(F.q)}" placeholder="toko / no / salesman"></label>`;
  const can=D.rows.length&&['TERANTAR','PENDING','BATAL_SUPIR'];
  return `<h2 style="margin-top:0">Invoice <small class="m">(${R.length})</small></h2>${filterBar(ex)}<div class="bar"><button class="b" onclick="expInv()">⬇ Ekspor CSV (Excel)</button></div>
  <div class="tw"><table><thead><tr><th>Tanggal</th><th>Invoice</th><th>Toko</th><th>Salesman</th><th class="n">Nominal</th><th>Status</th><th>Supir</th><th>Tgl antar</th><th>Foto</th><th></th></tr></thead><tbody>
- ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td><span class="chip ${r.status}">${SL[r.status]}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
+ ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
  <td>${can.includes(r.status)?`<button class="b" onclick="koreksi('${esc(r.invoice_no)}')">Koreksi</button>`:''}</td></tr>`).join('')}</tbody></table></div>${R.length>500?'<p class="m">Menampilkan 500 pertama. Persempit filter atau ekspor CSV.</p>':''}`}
 function expInv(){csv('invoice.csv',['Tanggal','Invoice','Toko','Salesman','Nominal','Status','Supir','Tgl Antar','Alasan','Foto'],flt().map(r=>[r.tanggal,r.invoice_no,r.pelanggan,r.salesman,r.nominal,r.status,sn(r.kode_supir||r.retur_dari),r.tgl_antar,r.alasan,r.foto]))}
 async function koreksi(no){const r=D.rows.find(x=>x.invoice_no===no);if(!r)return;

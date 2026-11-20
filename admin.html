@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin - Delivery System</title>
+<title>Delivery System</title>
 <!-- Ganti API_URL dengan URL Web App yang sama seperti index.html. Upload file ini ke folder yang sama di GitHub, buka .../admin.html -->
 <style>
 :root{--bg:#f4f6f9;--c:#fff;--t:#1d2733;--m:#667788;--p:#1a73e8;--b:#dde3ea;--ok:#188038;--w:#e37400;--r:#d93025}
@@ -25,7 +25,7 @@ dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);
 #toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;display:none}
 </style></head><body>
 <div id="login"><h2>Admin / Supervisor</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
-<div id="app" hidden><aside><h3>Antar Invoice</h3><div id="nav"></div><p class="m" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
+<div id="app" hidden><aside><h3>Delivery System</h3><div id="nav"></div><p class="m" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
 <dialog id="dlg"></dialog><div id="toast"></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
@@ -73,7 +73,9 @@ function vDash(){const R=flt(),by=s=>R.filter(r=>r.status===s),sum=a=>a.reduce((
  const rows=K.map(k=>{const a=R.filter(r=>(r.kode_supir||r.retur_dari)===k),c=s=>a.filter(r=>r.status===s).length;
   return `<tr><td>${esc(sn(k))}</td><td class="n">${c('DITUGASKAN')}</td><td class="n">${c('PENDING')}</td><td class="n">${c('TERANTAR')}</td><td class="n">${c('BATAL_SUPIR')}</td><td class="n">${rp(sum(a.filter(r=>r.status==='TERANTAR')))}</td></tr>`}).join('');
  return `<h2 style="margin-top:0">Dashboard</h2>${filterBar()}<div class="cards">${cards}</div><h3>Per supir</h3><div class="tw"><table><thead><tr><th>Supir</th><th class="n">Ditugaskan</th><th class="n">Pending</th><th class="n">Terantar</th><th class="n">Retur</th><th class="n">Nilai terantar (Rp)</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="m">Tidak ada data</td></tr>'}</tbody></table></div>
- <p class="m">Dihitung dari tanggal invoice pada rentang di atas.</p>`}
+ <p class="m">Dihitung dari tanggal invoice pada rentang di atas.</p>${pendingBox()}`}
+function pendingBox(){const P=D.rows.filter(r=>r.status==='PENDING').map(r=>({...r,h:Math.round((Date.parse(today())-Date.parse(r.tgl_tugas))/864e5)})).filter(r=>r.h>=3).sort((a,b)=>b.h-a.h);
+ return `<h3>⚠ Pending menumpuk (≥ 3 hari sejak ditugaskan): ${P.length}</h3>${P.length?`<div class="tw"><table><thead><tr><th>Invoice</th><th>Toko</th><th>Supir</th><th class="n">Hari</th><th>Alasan</th><th class="n">Nominal</th></tr></thead><tbody>${P.map(r=>`<tr><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(sn(r.kode_supir))}</td><td class="n">${r.h}</td><td>${esc(r.alasan)}</td><td class="n">${rp(r.nominal)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="m">Tidak ada.</p>'}`}
 
 function vInv(){const R=flt(),ex=`<label>Status<select id="fst"><option value="">Semua</option>${ST.map(s=>`<option ${F.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
  <label>Supir<select id="fsp"><option value="">Semua</option>${D.supir.map(s=>`<option value="${s.kode}" ${F.supir===s.kode?'selected':''}>${esc(s.nama)}</option>`).join('')}</select></label><label>Cari<input id="fq" value="${esc(F.q)}" placeholder="toko / no / salesman"></label>`;
@@ -90,9 +92,11 @@ async function koreksi(no){const r=D.rows.find(x=>x.invoice_no===no);if(!r)retur
 
 function vRek(){const K={};REK.forEach(r=>{const a=K[r.kode]=K[r.kode]||{n:r.nama,q:0,v:0};a.q+=r.qty;a.v+=r.nilai});
  const tq=REK.reduce((a,r)=>a+r.qty,0),tv=REK.reduce((a,r)=>a+r.nilai,0);
- return `<h2 style="margin-top:0">Rekap Supir</h2><div class="bar"><label>Bulan<input type="month" id="rb" value="${RB}"></label><button class="b pri" onclick="RB=$('#rb').value||RB;draw()">Tampilkan</button><button class="b" onclick="expRek()">⬇ Ekspor CSV</button></div>
+ return `<h2 style="margin-top:0">Rekap Supir</h2><div class="bar"><label>Bulan<input type="month" id="rb" value="${RB}"></label><button class="b pri" onclick="RB=$('#rb').value||RB;draw()">Tampilkan</button><button class="b" onclick="expRek()">⬇ Ekspor CSV</button>${ME.role==='ADMIN'?'<button class="b" onclick="hitung()">⟳ Hitung ulang rekap</button>':''}</div>
  <h3>Total per supir</h3><div class="tw"><table><thead><tr><th>Supir</th><th class="n">Qty</th><th class="n">Nilai (Rp)</th></tr></thead><tbody>${Object.keys(K).sort().map(k=>`<tr><td>${esc(K[k].n)}</td><td class="n">${K[k].q}</td><td class="n">${rp(K[k].v)}</td></tr>`).join('')}</tbody><tfoot><tr><th>TOTAL</th><th class="n">${tq}</th><th class="n">${rp(tv)}</th></tr></tfoot></table></div>
  <h3>Per hari</h3><div class="tw"><table><thead><tr><th>Tanggal</th><th>Supir</th><th class="n">Qty</th><th class="n">Nilai (Rp)</th></tr></thead><tbody>${[...REK].sort((a,b)=>a.tanggal<b.tanggal?-1:a.tanggal>b.tanggal?1:a.kode<b.kode?-1:1).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.nama)}</td><td class="n">${r.qty}</td><td class="n">${rp(r.nilai)}</td></tr>`).join('')}</tbody></table></div>`}
+async function hitung(){if(!confirm('Bangun ulang REKAP_SUPIR dari data TRANSAKSI? Gunakan bila angka rekap diduga tidak cocok.'))return;
+ try{const r=await api('aHitungUlang');toast('Rekap dihitung ulang ('+r.baris+' baris)');draw()}catch(e){toast(e.message)}}
 function expRek(){csv('rekap_'+RB+'.csv',['Tanggal','Kode','Supir','Qty','Nilai'],REK.map(r=>[r.tanggal,r.kode,r.nama,r.qty,r.nilai]))}
 
 function vUsr(){return `<h2 style="margin-top:0">User & Supir</h2><h3>Akun login</h3><div class="tw"><table><thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>

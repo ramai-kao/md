@@ -22,11 +22,13 @@ td.n,th.n{text-align:right}.chip{padding:2px 8px;border-radius:10px;font-size:12
 .m{color:var(--m)}#login{max-width:320px;margin:12vh auto}#login input{width:100%;margin:6px 0 12px}
 dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
 .row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer}.row .pri{background:var(--p);color:#fff;border:0}
-#toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;display:none}
+#toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;display:none;z-index:60}
+#busy{position:fixed;inset:0;background:#0008;color:#fff;display:none;flex-direction:column;gap:14px;align-items:center;justify-content:center;z-index:50;font-size:16px}
+.sp{width:44px;height:44px;border:5px solid #fff4;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 </style></head><body>
 <div id="login"><h2>DELIVERY SYSTEM</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
 <div id="app" hidden><aside><h3>DELIVERY SYSTEM</h3><div id="nav"></div><p class="m" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
-<dialog id="dlg"></dialog><div id="toast"></div>
+<dialog id="dlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
 const $=s=>document.querySelector(s);
@@ -39,18 +41,22 @@ let TK=sessionStorage.getItem('tk')||'',ME=JSON.parse(sessionStorage.getItem('me
 let D={rows:[],supir:[],batas:7},F={dari:ago(7),sampai:today(),status:'',supir:'',q:''},tab='dash',REK=[],RB=today().slice(0,7),USR=[];
 
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',4500)}
-async function api(a,p={}){try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:a,token:TK,...p})});
+async function api0(a,p={}){try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:a,token:TK,...p})});
  const j=await r.json();if(!j.ok){if(j.code==='SESSION')logout();throw Object.assign(new Error(j.message),{srv:1})}return j.data}
  catch(e){if(e.srv)throw e;throw new Error('Tidak bisa terhubung ke server')}}
+let BC=0;
+function busy(on,m){BC=Math.max(0,BC+(on?1:-1));if(on&&m)$('#bm').textContent=m;$('#busy').style.display=BC?'flex':'none'}
+const MSG={aList:'Memuat data…',aRekap:'Memuat rekap…',aUsers:'Memuat user…',aSync:'Menarik invoice baru…',aKoreksi:'Menyimpan koreksi…',aSetStatus:'Menyimpan…',aResetSecret:'Mereset…',aHitungUlang:'Menghitung ulang rekap…'};
+async function api(a,p){busy(1,MSG[a]||'Memproses…');try{return await api0(a,p)}finally{busy(0)}}
 function ask(title,fs,msg){return new Promise(r=>{const d=$('#dlg');
  d.innerHTML=`<form method="dialog"><h3 style="margin:0">${title}</h3>${msg?`<p class="m">${msg}</p>`:''}${fs.map(f=>f.opts?`<label>${f.l}<select name="${f.n}">${f.opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join('')}</select></label>`:`<label>${f.l}<input name="${f.n}" type="${f.t||'text'}" required autocomplete="off"></label>`).join('')}<div class="row"><button value="cancel" formnovalidate>Batal</button><button value="ok" class="pri">OK</button></div></form>`;
  d.returnValue='';d.onclose=()=>{const o={};if(d.returnValue==='ok')new FormData(d.querySelector('form')).forEach((v,k)=>o[k]=v);r(d.returnValue==='ok'?o:null)};d.showModal()})}
 function csv(name,head,rows){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
  const b=new Blob(['\ufeff'+[head,...rows].map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click()}
 
-async function login(){$('#le').textContent='';try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'adminLogin',username:$('#lu').value,password:$('#lp').value})});
+async function login(){$('#le').textContent='';busy(1,'Masuk…');try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'adminLogin',username:$('#lu').value,password:$('#lp').value})});
  const j=await r.json();if(!j.ok)throw new Error(j.message);TK=j.data.token;ME=j.data.user;sessionStorage.setItem('tk',TK);sessionStorage.setItem('me',JSON.stringify(ME));start()}
- catch(e){$('#le').textContent=e.message||'Gagal terhubung'}}
+ catch(e){$('#le').textContent=e.message||'Gagal terhubung'}finally{busy(0)}}
 function logout(){TK='';ME=null;sessionStorage.clear();D={rows:[],supir:[],batas:7};REK=[];USR=[];$('#main').innerHTML='';$('#nav').innerHTML='';$('#who').textContent='';$('#lp').value='';$('#app').hidden=true;$('#login').hidden=false}
 async function start(){$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=ME.nama+' ('+ME.role+')';await load();go('dash')}
 async function load(){try{D=await api('aList',{dari:F.dari});}catch(e){toast(e.message)}}
@@ -63,7 +69,7 @@ async function draw(){const M=$('#main');
  if(tab==='rek'){try{REK=(await api('aRekap',{bulan:RB})).rows}catch(e){toast(e.message)}}
  if(tab==='usr'){try{USR=(await api('aUsers')).users}catch(e){toast(e.message)}}
  M.innerHTML=({dash:vDash,inv:vInv,rek:vRek,usr:vUsr})[tab]()}
-const filterBar=(extra)=>`<div class="bar"><label>Dari<input type="date" id="fd" value="${F.dari}"></label><label>Sampai<input type="date" id="fs" value="${F.sampai}"></label>${extra||''}<button class="b pri" onclick="apply()">Terapkan</button><button class="b" onclick="syncNow()">⟳ Tarik invoice baru</button></div>`;
+const filterBar=(extra)=>`<div class="bar"><label>Dari<input type="date" id="fd" value="${F.dari}"></label><label>Sampai<input type="date" id="fs" value="${F.sampai}"></label>${extra||''}<button class="b pri" onclick="apply()">Cari</button><button class="b" onclick="syncNow()">⟳ Tarik invoice baru</button></div>`;
 async function apply(){F.dari=$('#fd').value;F.sampai=$('#fs').value;if($('#fst'))F.status=$('#fst').value;if($('#fsp'))F.supir=$('#fsp').value;if($('#fq'))F.q=$('#fq').value;await load();draw()}
 async function syncNow(){try{await api('aSync');await load();draw();toast('Invoice terbaru sudah ditarik')}catch(e){toast(e.message)}}
 

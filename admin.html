@@ -18,7 +18,7 @@ button.b{padding:8px 12px;border:1px solid var(--b);border-radius:6px;background
 .tw{overflow:auto;border:1px solid var(--b);border-radius:10px;background:var(--c)}
 table{border-collapse:collapse;width:100%}th,td{padding:7px 10px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}th{background:var(--bg);position:sticky;top:0}
 td.n,th.n{text-align:right}.chip{padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg)}
-.TERANTAR{color:var(--ok)}.PENDING{color:var(--w)}.BATAL_SUPIR,.BATAL_TOTAL{color:var(--r)}
+.TERANTAR{color:var(--ok)}.DIAMBIL{color:var(--ok)}.PENDING{color:var(--w)}.BATAL_SUPIR,.BATAL_TOTAL{color:var(--r)}
 .m{color:var(--m)}#login{max-width:320px;margin:12vh auto}#login input{width:100%;margin:6px 0 12px}
 dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
 .row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer}.row .pri{background:var(--p);color:#fff;border:0}
@@ -34,7 +34,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const rp=n=>Number(n).toLocaleString('id-ID');
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const ago=n=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4-n*864e5).toISOString().slice(0,10);
-const ST=['BARU','DITERIMA','DITUGASKAN','PENDING','TERANTAR','BATAL_SUPIR','BATAL_TOTAL'];
+const ST=['BARU','DITERIMA','DITUGASKAN','PENDING','TERANTAR','DIAMBIL','BATAL_SUPIR','BATAL_TOTAL'];
 let TK=sessionStorage.getItem('tk')||'',ME=JSON.parse(sessionStorage.getItem('me')||'null');
 let D={rows:[],supir:[],batas:7},F={dari:ago(7),sampai:today(),status:'',supir:'',q:''},tab='dash',REK=[],RB=today().slice(0,7),USR=[];
 
@@ -73,7 +73,7 @@ function vDash(){const R=flt(),by=s=>R.filter(r=>r.status===s),sum=a=>a.reduce((
  const rows=K.map(k=>{const a=R.filter(r=>(r.kode_supir||r.retur_dari)===k),c=s=>a.filter(r=>r.status===s).length;
   return `<tr><td>${esc(sn(k))}</td><td class="n">${c('DITUGASKAN')}</td><td class="n">${c('PENDING')}</td><td class="n">${c('TERANTAR')}</td><td class="n">${c('BATAL_SUPIR')}</td><td class="n">${rp(sum(a.filter(r=>r.status==='TERANTAR')))}</td></tr>`}).join('');
  return `<h2 style="margin-top:0">Dashboard</h2>${filterBar()}<div class="cards">${cards}</div><h3>Per supir</h3><div class="tw"><table><thead><tr><th>Supir</th><th class="n">Ditugaskan</th><th class="n">Pending</th><th class="n">Terantar</th><th class="n">Retur</th><th class="n">Nilai terantar (Rp)</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="m">Tidak ada data</td></tr>'}</tbody></table></div>
- <p class="m">Dihitung dari tanggal invoice pada rentang di atas.</p>${pendingBox()}`}
+ <p class="m">Dihitung dari tanggal invoice pada rentang di atas. Invoice Diambil (toko ambil di gudang) tidak masuk tabel per supir.</p>${pendingBox()}`}
 function pendingBox(){const P=D.rows.filter(r=>r.status==='PENDING').map(r=>({...r,h:Math.round((Date.parse(today())-Date.parse(r.tgl_tugas))/864e5)})).filter(r=>r.h>=3).sort((a,b)=>b.h-a.h);
  return `<h3>⚠ Pending menumpuk (≥ 3 hari sejak ditugaskan): ${P.length}</h3>${P.length?`<div class="tw"><table><thead><tr><th>Invoice</th><th>Toko</th><th>Supir</th><th class="n">Hari</th><th>Alasan</th><th class="n">Nominal</th></tr></thead><tbody>${P.map(r=>`<tr><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(sn(r.kode_supir))}</td><td class="n">${r.h}</td><td>${esc(r.alasan)}</td><td class="n">${rp(r.nominal)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="m">Tidak ada.</p>'}`}
 
@@ -81,8 +81,8 @@ function vInv(){const R=flt(),ex=`<label>Status<select id="fst"><option value=""
  <label>Supir<select id="fsp"><option value="">Semua</option>${D.supir.map(s=>`<option value="${s.kode}" ${F.supir===s.kode?'selected':''}>${esc(s.nama)}</option>`).join('')}</select></label><label>Cari<input id="fq" value="${esc(F.q)}" placeholder="toko / no / salesman"></label>`;
  const can=D.rows.length&&['TERANTAR','PENDING','BATAL_SUPIR'];
  return `<h2 style="margin-top:0">Invoice <small class="m">(${R.length})</small></h2>${filterBar(ex)}<div class="bar"><button class="b" onclick="expInv()">⬇ Ekspor CSV (Excel)</button></div>
- <div class="tw"><table><thead><tr><th>Tanggal</th><th>Invoice</th><th>Toko</th><th>Salesman</th><th class="n">Nominal</th><th>Status</th><th>Supir</th><th>Tgl antar</th><th>Foto</th><th></th></tr></thead><tbody>
- ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
+ <div class="tw"><table><thead><tr><th>Tanggal</th><th>Invoice</th><th>Toko</th><th>Salesman</th><th class="n">Nominal</th><th>Status</th><th>Supir</th><th>Tgl antar</th><th>Keterangan</th><th>Foto</th><th></th></tr></thead><tbody>
+ ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${esc(r.alasan)}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
  <td>${can.includes(r.status)?`<button class="b" onclick="koreksi('${esc(r.invoice_no)}')">Koreksi</button>`:''}</td></tr>`).join('')}</tbody></table></div>${R.length>500?'<p class="m">Menampilkan 500 pertama. Persempit filter atau ekspor CSV.</p>':''}`}
 function expInv(){csv('invoice.csv',['Tanggal','Invoice','Toko','Salesman','Nominal','Status','Supir','Tgl Antar','Alasan','Foto'],flt().map(r=>[r.tanggal,r.invoice_no,r.pelanggan,r.salesman,r.nominal,r.status,sn(r.kode_supir||r.retur_dari),r.tgl_antar,r.alasan,r.foto]))}
 async function koreksi(no){const r=D.rows.find(x=>x.invoice_no===no);if(!r)return;

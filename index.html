@@ -24,6 +24,7 @@ main{padding:10px}
 button{font:inherit;cursor:pointer}button:disabled{opacity:.4}
 .card{background:var(--c);border:1px solid var(--b);border-left:5px solid var(--m);border-radius:10px;padding:10px 12px;margin-bottom:10px}
 .card.TERANTAR{border-left-color:var(--ok)}.card.PENDING{border-left-color:var(--w)}.card.BATAL_SUPIR{border-left-color:var(--r)}
+.card.DIAMBIL{border-left-color:var(--ok)}
 .top{display:flex;justify-content:space-between;gap:8px}
 .chip{font-size:12px;background:var(--bg);border-radius:10px;padding:2px 8px;white-space:nowrap;height:fit-content}
 .m{color:var(--m);font-size:13px;margin-top:2px}.amt{font-weight:700;font-size:17px;margin:6px 0}
@@ -52,7 +53,7 @@ dialog input,dialog select{width:100%;padding:12px;font-size:17px;margin-top:4px
 #toast{position:fixed;left:12px;right:12px;bottom:76px;background:#222;color:#fff;padding:12px;border-radius:8px;display:none;z-index:20}
 #busy{position:fixed;inset:0;background:#0008;color:#fff;display:none;align-items:center;justify-content:center;z-index:30;font-size:18px}
 .chk{width:22px;height:22px;margin:2px 10px 0 0}.top{align-items:flex-start}
-.sbar{position:fixed;left:0;right:0;bottom:50px;z-index:6;display:flex;gap:8px;align-items:center;background:var(--c);border-top:1px solid var(--b);padding:8px 12px}
+.sbar{position:fixed;left:0;right:0;bottom:50px;z-index:6;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--c);border-top:1px solid var(--b);padding:8px 12px}
 .sbar span{flex:1;font-weight:600}.sbar button{padding:10px 14px;border-radius:8px;border:1px solid var(--b);background:none;color:var(--t);font-weight:600}.sbar .pri{background:var(--p);color:#fff;border:0}
 </style></head><body>
 <div id="app"></div><nav id="nav"></nav><dialog id="dlg"></dialog><div id="toast"></div><div id="busy">Memproses…</div>
@@ -80,7 +81,7 @@ const busy=b=>$('#busy').style.display=b?'flex':'none';
 function ask(title,fs,msg){return new Promise(r=>{const d=$('#dlg');
  d.innerHTML=`<form method="dialog"><h3 style="margin:0 0 4px">${title}</h3>${msg?`<div class="m">${msg}</div>`:''}${fs.map(f=>f.opts
  ?`<label>${f.l}<select name="${f.n}">${f.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select></label>`
- :f.t=='file'?`<label>${f.l}<input name="${f.n}" type="file" accept="image/*" capture="environment"></label>`:`<label>${f.l}<input name="${f.n}" type="${f.t||'text'}" ${f.t=='password'?'inputmode="numeric" maxlength="4" pattern="[0-9]{4}"':''} required autocomplete="off"></label>`).join('')}
+ :f.t=='file'?`<label>${f.l}<input name="${f.n}" type="file" accept="image/*" capture="environment"></label>`:`<label>${f.l}<input name="${f.n}" type="${f.t||'text'}" ${f.t=='password'?'inputmode="numeric" maxlength="4" pattern="[0-9]{4}"':''} ${f.o?'':'required'} autocomplete="off"></label>`).join('')}
  <div class="row"><button value="cancel" formnovalidate>Batal</button><button value="ok" class="pri">OK</button></div></form>`;
  d.returnValue='';d.onclose=()=>{const o={};if(d.returnValue==='ok')new FormData(d.querySelector('form')).forEach((v,k)=>o[k]=v);r(d.returnValue==='ok'?o:null)};d.showModal()})}
 
@@ -116,14 +117,14 @@ async function download(){if(nOb()&&!confirm('Ada perubahan yang belum diupload.
  busy(1);try{await doDownload(o.pin);toast('Download berhasil: '+S.invoice.length+' invoice')}catch(e){toast(e.message)}busy(0)}
 
 async function upload(){
- const items=Object.keys(S.ob).map(no=>{const o=S.ob[no];return isG()?{invoice_no:no,op:o.op,kode_supir:o.kode,alasan:o.alasan,base_versi:o.bv}:{invoice_no:no,status:o.status,alasan:o.alasan,tgl_antar:o.tgl,base_versi:o.bv}});
+ const items=Object.keys(S.ob).map(no=>{const o=S.ob[no];return isG()?{invoice_no:no,op:o.op,kode_supir:o.kode,alasan:o.alasan,tgl_antar:o.tgl,pengambil:o.pengambil,base_versi:o.bv}:{invoice_no:no,status:o.status,alasan:o.alasan,tgl_antar:o.tgl,base_versi:o.bv}});
  if(!items.length){if(!S.fq.length)return toast('Tidak ada perubahan untuk diupload');const q=await ask('Kirim '+S.fq.length+' foto tertunda',[{n:'pin',l:'PIN 4 digit',t:'password'}]);if(!q)return;busy(1);try{const n=await flushFoto(q.pin);toast(n+' foto diproses')}catch(e){toast(e.message)}busy(0);return}
  const o=await ask('Upload '+items.length+' perubahan',[{n:'pin',l:'PIN 4 digit',t:'password'}]);if(!o)return;
  const sig=JSON.stringify(items);
  if(!S.up||S.up.sig!==sig)S.up={sig,id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random())};
  await save();busy(1);
  try{const r=await api({action:'upload',username:S.username,pin:o.pin,uploadId:S.up.id,items});const bad=[];
-  r.results.forEach(x=>{const o0=S.ob[x.invoice_no];delete S.ob[x.invoice_no];if(o0&&o0.f){if(x.result==='OK'&&x.status==='TERANTAR')S.fq.push(x.invoice_no);else kv.del('foto:'+x.invoice_no)}const i=S.invoice.find(v=>v.invoice_no===x.invoice_no);if(!i)return;
+  r.results.forEach(x=>{const o0=S.ob[x.invoice_no];delete S.ob[x.invoice_no];if(o0&&o0.f){if(x.result==='OK'&&(x.status==='TERANTAR'||x.status==='DIAMBIL'))S.fq.push(x.invoice_no);else kv.del('foto:'+x.invoice_no)}const i=S.invoice.find(v=>v.invoice_no===x.invoice_no);if(!i)return;
    if(x.result==='OK'){i.status=x.status;i.versi=x.versi;delete i.note}else{i.note=x.result+': '+x.message;bad.push(x)}});
   S.up=null;await save();render();
   if(S.fq.length){try{await flushFoto(o.pin)}catch(e){}}
@@ -145,11 +146,11 @@ function mb(k){S.bulan=months()[k];render()}
 const tab=t=>{S.tab=t;render()};
 
 // ===== GUDANG =====
-const SEL=new Set(),GL={BARU:'Baru',DITERIMA:'Diterima'};
+const SEL=new Set(),GL={BARU:'Baru',DITERIMA:'Diterima',DIAMBIL:'Diambil toko'};
 const isG=()=>S.user&&S.user.role==='GUDANG';
 const gi=no=>S.invoice.find(i=>i.invoice_no===no);
-const canA=i=>i.status!=='BATAL_SUPIR'&&(!S.ob[i.invoice_no]||S.ob[i.invoice_no].op==='TERIMA');
-const opL=o=>({TERIMA:'✓ Diterima',TUGASKAN:'→ '+o.nm,TUGASKAN_ULANG:'→ '+o.nm+' (ulang)',BATAL_TOTAL:'🚫 Batal total'}[o.op]);
+const canA=i=>['BARU','DITERIMA'].includes(i.status)&&(!S.ob[i.invoice_no]||S.ob[i.invoice_no].op==='TERIMA');
+const opL=o=>({TERIMA:'✓ Diterima',TUGASKAN:'→ '+o.nm,TUGASKAN_ULANG:'→ '+o.nm+' (ulang)',BATAL_TOTAL:'🚫 Batal total',AMBIL_GUDANG:'🏪 Diambil toko'}[o.op]);
 function tg(no){SEL.has(no)?SEL.delete(no):SEL.add(no);render()}
 function pilihSemua(){const L=S.invoice.filter(canA),all=L.every(i=>SEL.has(i.invoice_no));L.forEach(i=>all?SEL.delete(i.invoice_no):SEL.add(i.invoice_no));render()}
 async function pilihSupir(t){if(!S.supir.length){toast('Daftar supir kosong. Download dulu.');return null}
@@ -161,6 +162,16 @@ async function gTerima(){const L=[...SEL].map(gi).filter(i=>i&&i.status==='BARU'
 async function gTugas(){const L=[...SEL].map(gi).filter(i=>i&&canA(i));if(!L.length)return toast('Pilih invoice dulu');
  const s=await pilihSupir('Tugaskan '+L.length+' invoice');if(!s)return;
  L.forEach(i=>S.ob[i.invoice_no]={op:'TUGASKAN',kode:s.kode,nm:s.nm,bv:i.versi});SEL.clear();await save();render()}
+async function gAmbil(){const L=[...SEL].map(gi).filter(i=>i&&canA(i));
+ if(!L.length)return toast('Pilih invoice Baru/Diterima dulu');
+ const o=await ask('Diambil langsung di gudang ('+L.length+' invoice)',
+  [{n:'p',l:'Nama pengambil (opsional)',o:1},{n:'foto',l:'📷 Foto bukti (boleh dikosongkan)',t:'file'}],
+  'Invoice langsung selesai tanpa supir.');
+ if(!o)return;
+ let f=0;
+ if(o.foto&&o.foto.size){try{const d=await kecil(o.foto);for(const i of L)await kv.set('foto:'+i.invoice_no,d);f=1}catch(e){toast('Foto gagal diproses, dilanjutkan tanpa foto')}}
+ L.forEach(i=>S.ob[i.invoice_no]={op:'AMBIL_GUDANG',tgl:today(),pengambil:(o.p||'').trim(),bv:i.versi,f});
+ SEL.clear();await save();render()}
 async function gRetur(no,op){const i=gi(no);if(!i)return;
  if(op==='TUGASKAN_ULANG'){const s=await pilihSupir('Tugaskan ulang ke');if(!s)return;S.ob[no]={op,kode:s.kode,nm:s.nm,bv:i.versi}}
  else{const o=await ask('Batal total',[{n:'a',l:'Alasan',opts:S.ab}]);if(!o)return;S.ob[no]={op,alasan:o.a,bv:i.versi}}
@@ -171,7 +182,7 @@ function gcard(i){const o=S.ob[i.invoice_no],n=esc(i.invoice_no),ret=i.status===
  <div class="amt">${rp(i.nominal)}</div>${ret?`<div class="m">Dari ${esc(i.retur_dari)} · Alasan: ${esc(i.alasan)}</div>`:''}${i.note?`<div class="err">${esc(i.note)}</div>`:''}
  ${o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`:ret?`<div class="acts"><button class="ok" onclick="gRetur('${n}','TUGASKAN_ULANG')">Tugaskan ulang</button><button class="rd" onclick="gRetur('${n}','BATAL_TOTAL')">Batal total</button></div>`:''}</div>`}
 const banG=()=>S.pn>S.invoice.length?`<div class="ban">📦 Ada invoice baru/retur di server (${S.pn}). Silakan <b>Download</b>.</div>`:'';
-function vInv(){const L=S.invoice.filter(i=>i.status!=='BATAL_SUPIR');
+function vInv(){const L=S.invoice.filter(i=>i.status!=='BATAL_SUPIR'&&i.status!=='DIAMBIL');
  if(!L.length)return banG()+'<div class="empty">Tidak ada invoice baru.<br>Tekan <b>Download</b> saat online.</div>';
  return banG()+`<div class="bar"><b>${L.length} invoice</b><button onclick="pilihSemua()">Pilih semua</button></div>`+L.map(gcard).join('')}
 function vRetur(){const L=S.invoice.filter(i=>i.status==='BATAL_SUPIR');return banG()+(L.length?L.map(gcard).join(''):'<div class="empty">Tidak ada invoice retur.</div>')}
@@ -180,7 +191,7 @@ function vGrekap(){const t=today(),A={};S.supir.forEach(s=>A[s.kode]={n:s.nama,h
  const K=Object.keys(A).sort(),T=K.reduce((a,k)=>({h:a.h+A[k].h,q:a.q+A[k].q,v:a.v+A[k].v}),{h:0,q:0,v:0});
  return `<table><thead><tr><th>Supir</th><th>Hari ini</th><th>Bulan ini</th><th>Nilai (Rp)</th></tr></thead><tbody>${K.map(k=>`<tr><td>${esc(A[k].n)}</td><td>${A[k].h}</td><td>${A[k].q}</td><td>${A[k].v.toLocaleString('id-ID')}</td></tr>`).join('')}</tbody>
  <tfoot><tr><td>TOTAL</td><td>${T.h}</td><td>${T.q}</td><td>${T.v.toLocaleString('id-ID')}</td></tr></tfoot></table><p class="m">Qty = invoice Terantar. Diperbarui saat Download (${esc(S.dl||'belum pernah')}).</p>`}
-const sbar=()=>isG()&&S.tab==='inv'&&SEL.size?`<div style="height:60px"></div><div class="sbar"><span>${SEL.size} dipilih</span><button onclick="gTerima()">Terima</button><button class="pri" onclick="gTugas()">Tugaskan…</button></div>`:'';
+const sbar=()=>isG()&&S.tab==='inv'&&SEL.size?`<div style="height:100px"></div><div class="sbar"><span>${SEL.size} dipilih</span><button onclick="gTerima()">Terima</button><button onclick="gAmbil()">🏪 Diambil toko</button><button class="pri" onclick="gTugas()">Tugaskan…</button></div>`:'';
 const vBody=()=>isG()?{inv:vInv,retur:vRetur,grekap:vGrekap,akun:vAkun}[S.tab]():S.tab==='rekap'?vRekap():S.tab==='akun'?vAkun():vTugas();
 const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.filter(i=>i.status==='BATAL_SUPIR').length?' ('+S.invoice.filter(i=>i.status==='BATAL_SUPIR').length+')':'')],['grekap','📊 Rekap'],['akun','👤 Akun']]:[['tugas','📋 Tugas'],['rekap','📊 Rekap'],['akun','👤 Akun']];
 

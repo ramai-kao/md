@@ -10,7 +10,8 @@
 :root{--hh:52px;--hg:#d6eedd;--ht:#1b4332;--hb:#b5dcc1}
 @media(prefers-color-scheme:dark){:root{--hg:#1f3a2b;--ht:#d3efdc;--hb:#2f5a43}}
 #app{min-height:100vh}#wrap{display:flex}
-aside{width:190px;background:var(--c);border-right:1px solid var(--b);padding:14px;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));align-self:flex-start}
+aside{width:190px;background:var(--c);border-right:1px solid var(--b);padding:14px;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));align-self:flex-start;display:flex;flex-direction:column}
+#ver{margin-top:auto;padding-top:10px;font-size:11px;color:var(--m);text-align:center}
 #top{position:sticky;top:0;z-index:20;height:var(--hh);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;background:var(--hg);color:var(--ht);border-bottom:1px solid var(--hb)}
 #top .l{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;min-width:0}#top .l svg{width:30px;height:30px;flex:none}
 #top .l span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -28,20 +29,42 @@ button.b{padding:8px 12px;border:1px solid var(--b);border-radius:6px;background
 table{border-collapse:collapse;width:100%}th,td{padding:7px 10px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}th{background:var(--bg);position:sticky;top:0}
 td.n,th.n{text-align:right}.chip{padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg)}
 .TERANTAR{color:var(--ok)}.DIAMBIL{color:var(--ok)}.PENDING{color:var(--w)}.BATAL_SUPIR,.BATAL_TOTAL{color:var(--r)}
+#fdlg{width:min(94vw,780px);padding:0;overflow:hidden}
+#fdlg .fh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--b)}
+#fdlg iframe{display:block;width:100%;height:70vh;border:0;background:var(--bg)}
+#fdlg .ff{padding:8px 14px;font-size:12px}
 td.k{background:#fff3b0;color:#5c4a00}td.mr{background:#ffc9c4;color:#7a1710}td.hj{background:#c9efd3;color:#14532d}
 td.k .chip,td.mr .chip,td.hj .chip{background:transparent;color:inherit;font-weight:600}
-.m{color:var(--m)}#login{max-width:320px;margin:12vh auto}#login input{width:100%;margin:6px 0 12px}
+.m{color:var(--m)}#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;color:#e6f4ec;background:radial-gradient(1200px 600px at 15% 10%,#0d3b2c 0,transparent 60%),radial-gradient(900px 600px at 90% 95%,#0a2d52 0,transparent 60%),#060b12}
+#login::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(80,200,140,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(80,200,140,.07) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0,transparent 75%);mask-image:radial-gradient(circle at 50% 45%,#000 0,transparent 75%)}
+#login::after{content:"";position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(46,158,91,.28),transparent 65%);top:50%;left:50%;transform:translate(-50%,-55%);filter:blur(20px);animation:pulse 6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55;transform:translate(-50%,-55%) scale(1.15)}}
+@media(prefers-reduced-motion:reduce){#login::after{animation:none}}
+.lc{position:relative;z-index:1;width:min(92vw,380px);padding:34px 30px 22px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(120,230,170,.22);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 20px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);text-align:center}
+.lc svg.lg{width:88px;height:88px;filter:drop-shadow(0 0 16px rgba(46,158,91,.65))}
+.lc .cn{margin-top:14px;font-size:20px;font-weight:700;letter-spacing:.04em;overflow-wrap:anywhere}
+.lc .ds{display:flex;align-items:center;gap:10px;margin:8px 0 26px;font-size:12px;font-weight:700;letter-spacing:.38em;color:#5ee0a0;text-shadow:0 0 12px rgba(94,224,160,.6)}
+.lc .ds::before,.lc .ds::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(94,224,160,.6))}
+.lc .ds::after{transform:scaleX(-1)}
+.lc label{display:block;text-align:left;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8fb7a2;margin-bottom:14px}
+.lc input{width:100%;margin-top:6px;padding:12px 14px;font-size:15px;color:#e6f4ec;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:10px;outline:0;transition:.2s}
+.lc input:focus{border-color:#5ee0a0;box-shadow:0 0 0 3px rgba(94,224,160,.2)}
+.lc .lb{width:100%;margin-top:6px;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:.12em;color:#04130b;background:linear-gradient(135deg,#5ee0a0,#37b6d6);cursor:pointer;box-shadow:0 8px 24px rgba(55,182,214,.28);transition:.2s}
+.lc .lb:hover{filter:brightness(1.08);box-shadow:0 8px 30px rgba(94,224,160,.4)}
+#le{min-height:18px;margin:12px 0 0;color:#ff8a80;font-size:13px}
+.lc .lv{margin-top:10px;font-size:11px;color:#6f8f80}
 dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
 .row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer}.row .pri{background:var(--p);color:#fff;border:0}
 #toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;display:none;z-index:60}
 #busy{position:fixed;inset:0;background:#0008;color:#fff;display:none;flex-direction:column;gap:14px;align-items:center;justify-content:center;z-index:50;font-size:16px}
 .sp{width:44px;height:44px;border:5px solid #fff4;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 </style></head><body>
-<div id="login"><h2>DELIVERY SYSTEM</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
-<div id="app" hidden><header id="top"><div class="l"><svg viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#2e9e5b"/><g transform="translate(7 -38)" fill="#fff"><rect x="200" y="340" width="360" height="300" rx="24"/><path d="M580 420H730L810 520V640H580Z"/><path d="M610 452H708L762 520H610Z" fill="#2e9e5b"/><g stroke="#2e9e5b" stroke-width="22"><circle cx="340" cy="680" r="73"/><circle cx="700" cy="680" r="73"/></g><circle cx="340" cy="680" r="62"/><circle cx="700" cy="680" r="62"/><g fill="#2e9e5b"><circle cx="340" cy="680" r="24"/><circle cx="700" cy="680" r="24"/></g></g></svg><span id="co"></span></div><div class="r"><span id="who"></span><button onclick="keluar()">Keluar</button></div></header><div id="wrap"><aside><div id="nav"></div></aside><main id="main"></main></div></div>
-<dialog id="dlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
+<div id="login"><div class="lc"><svg class="lg" viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#2e9e5b"/><g transform="translate(7 -38)" fill="#fff"><rect x="200" y="340" width="360" height="300" rx="24"/><path d="M580 420H730L810 520V640H580Z"/><path d="M610 452H708L762 520H610Z" fill="#2e9e5b"/><g stroke="#2e9e5b" stroke-width="22"><circle cx="340" cy="680" r="73"/><circle cx="700" cy="680" r="73"/></g><circle cx="340" cy="680" r="62"/><circle cx="700" cy="680" r="62"/><g fill="#2e9e5b"><circle cx="340" cy="680" r="24"/><circle cx="700" cy="680" r="24"/></g></g></svg><div class="cn" id="co2"></div><div class="ds">DELIVERY SYSTEM</div><label>Username<input id="lu" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="lb" onclick="login()">MASUK</button><p id="le"></p><div class="lv" id="ver2"></div></div></div>
+<div id="app" hidden><header id="top"><div class="l"><svg viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#2e9e5b"/><g transform="translate(7 -38)" fill="#fff"><rect x="200" y="340" width="360" height="300" rx="24"/><path d="M580 420H730L810 520V640H580Z"/><path d="M610 452H708L762 520H610Z" fill="#2e9e5b"/><g stroke="#2e9e5b" stroke-width="22"><circle cx="340" cy="680" r="73"/><circle cx="700" cy="680" r="73"/></g><circle cx="340" cy="680" r="62"/><circle cx="700" cy="680" r="62"/><g fill="#2e9e5b"><circle cx="340" cy="680" r="24"/><circle cx="700" cy="680" r="24"/></g></g></svg><span id="co"></span></div><div class="r"><span id="who"></span><button onclick="keluar()">Keluar</button></div></header><div id="wrap"><aside><div id="nav"></div><div id="ver"></div></aside><main id="main"></main></div></div>
+<dialog id="dlg"></dialog><dialog id="fdlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
+const APP_VERSI='1.0.1',DEVELOPER='SPV-DB';   // tampil di bawah menu kiri
 const NAMA_PERUSAHAAN='CV. RAMAI';   // <-- ganti dengan nama perusahaan Anda
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,12 +92,19 @@ function csv(name,head,rows){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'"
 async function login(){$('#le').textContent='';busy(1,'Masuk…');try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'adminLogin',username:$('#lu').value,password:$('#lp').value})});
  const j=await r.json();if(!j.ok)throw new Error(j.message);TK=j.data.token;ME=j.data.user;sessionStorage.setItem('tk',TK);sessionStorage.setItem('me',JSON.stringify(ME));start()}
  catch(e){$('#le').textContent=e.message||'Gagal terhubung'}finally{busy(0)}}
+function foto(el){const r=D.rows.find(x=>x.invoice_no===el.dataset.no);if(!r||!r.foto)return;
+ const u=String(r.foto),m=u.match(/\/d\/([\w-]+)/)||u.match(/[?&]id=([\w-]+)/),d=$('#fdlg');
+ const src=m?'https://drive.google.com/file/d/'+m[1]+'/preview':'';
+ d.innerHTML=`<div class="fh"><b>${esc(r.invoice_no)} · ${esc(r.pelanggan)}</b><button class="b" onclick="$('#fdlg').close()" aria-label="Tutup">✕</button></div>${src?`<iframe src="${src}"></iframe>`:'<p class="m" style="padding:16px">Foto tidak dapat ditampilkan.</p>'}<div class="ff m">Foto tidak muncul? Pastikan Anda login Google dengan akun yang punya akses. <a href="${esc(u)}" target="_blank" rel="noopener">Buka di tab baru</a></div>`;
+ d.showModal()}
+$('#fdlg').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+$('#fdlg').addEventListener('close',()=>{$('#fdlg').innerHTML=''});
 function konfirm(title,msg,ya,tidak){return new Promise(r=>{const d=$('#dlg');
  d.innerHTML=`<form method="dialog"><h3 style="margin:0">${title}</h3><p class="m">${msg}</p><div class="row"><button value="cancel">${tidak}</button><button value="ok" class="pri">${ya}</button></div></form>`;
  d.returnValue='';d.onclose=()=>r(d.returnValue==='ok');d.showModal()})}
 async function keluar(){if(await konfirm('Keluar dari aplikasi?','Anda akan keluar dari sesi ini. Pilih "Lanjut bekerja" jika masih ingin memakai aplikasi.','Ya, keluar','Lanjut bekerja'))logout()}
 function logout(){TK='';ME=null;sessionStorage.clear();D={rows:[],supir:[],batas:7};REK=[];USR=[];$('#main').innerHTML='';$('#nav').innerHTML='';$('#who').textContent='';$('#lp').value='';$('#app').hidden=true;$('#login').hidden=false}
-$('#co').textContent=NAMA_PERUSAHAAN;
+$('#co').textContent=$('#co2').textContent=NAMA_PERUSAHAAN;$('#ver').textContent=$('#ver2').textContent='versi '+APP_VERSI+' - by : '+DEVELOPER;
 async function start(){$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=ME.nama+' ('+ME.role+')';await load();go('dash')}
 async function load(){try{D=await api('aList',{dari:F.dari});}catch(e){toast(e.message)}}
 const AKTIF=['BARU','DITERIMA','DITUGASKAN','PENDING','BATAL_SUPIR'],SELESAI=['TERANTAR','DIAMBIL'],KUNING_HARI=1,MERAH_HARI=3;
@@ -108,8 +138,8 @@ function vInv(){const R=flt(),ex=`<label>Status<select id="fst"><option value=""
  const can=D.rows.length&&['TERANTAR','PENDING','BATAL_SUPIR'];
  return `<h2 style="margin-top:0">Invoice <small class="m">(${R.length})</small></h2>${filterBar(ex)}<div class="bar"><button class="b" onclick="expInv()">⬇ Ekspor CSV (Excel)</button><span class="m">Warna status: <b style="background:#fff3b0;color:#5c4a00;padding:1px 6px;border-radius:4px">kuning</b> belum selesai &gt; ${KUNING_HARI} hari sejak tanggal invoice, <b style="background:#ffc9c4;color:#7a1710;padding:1px 6px;border-radius:4px">merah</b> &gt; ${MERAH_HARI} hari, <b style="background:#c9efd3;color:#14532d;padding:1px 6px;border-radius:4px">hijau</b> selesai (Terantar/Diambil)</span></div>
  <div class="tw"><table><thead><tr><th>Tanggal</th><th>Invoice</th><th>Toko</th><th>Salesman</th><th class="n">Nominal</th><th>Status</th><th>Supir</th><th>Tgl antar</th><th>Keterangan</th><th>Foto</th><th></th></tr></thead><tbody>
- ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td class="${warnaSt(r)}"><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${esc(r.alasan)}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
- <td>${can.includes(r.status)?`<button class="b" onclick="koreksi('${esc(r.invoice_no)}')">Koreksi</button>`:''}</td></tr>`).join('')}</tbody></table></div>${R.length>500?'<p class="m">Menampilkan 500 pertama. Persempit filter atau ekspor CSV.</p>':''}`}
+ ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td class="${warnaSt(r)}"><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${esc(r.alasan)}</td><td>${r.foto?`<a href="#" title="Lihat foto" data-no="${esc(r.invoice_no)}" onclick="foto(this);return false">📷</a>`:''}</td>
+ <td>${can.includes(r.status)?`<button class="b" title="Koreksi status" aria-label="Koreksi status" onclick="koreksi('${esc(r.invoice_no)}')">✏️</button>`:''}</td></tr>`).join('')}</tbody></table></div>${R.length>500?'<p class="m">Menampilkan 500 pertama. Persempit filter atau ekspor CSV.</p>':''}`}
 function expInv(){csv('invoice.csv',['Tanggal','Invoice','Toko','Salesman','Nominal','Status','Supir','Tgl Antar','Alasan','Foto'],flt().map(r=>[r.tanggal,r.invoice_no,r.pelanggan,r.salesman,r.nominal,r.status,sn(r.kode_supir||r.retur_dari),r.tgl_antar,r.alasan,r.foto]))}
 async function koreksi(no){const r=D.rows.find(x=>x.invoice_no===no);if(!r)return;
  const o=await ask('Koreksi status',[{n:'ke',l:'Ubah ke',opts:['TERANTAR','PENDING','BATAL_SUPIR'].filter(s=>s!==r.status).map(s=>[s,s])},{n:'a',l:'Alasan koreksi (wajib)'}],
@@ -136,5 +166,6 @@ async function setSt(kind,key,status){if(!confirm(status+': '+key+'?'))return;
 async function reset(u,role){const adm=role==='ADMIN'||role==='OM';const o=await ask('Reset '+(adm?'password':'PIN')+': '+esc(u),[{n:'s',l:adm?'Password baru (min. 8 karakter)':'PIN baru (4 digit)',t:'password'}]);if(!o)return;
  try{await api('aResetSecret',{username:u,secret:o.s});toast('Berhasil direset')}catch(e){toast(e.message)}}
 $('#lp').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+$('#lu').addEventListener('keydown',e=>{if(e.key==='Enter')$('#lp').focus()});
 if(TK&&ME)start();
 </script></body></html>

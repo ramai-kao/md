@@ -25,7 +25,7 @@ main{padding:10px}
 button{font:inherit;cursor:pointer}button:disabled{opacity:.4}
 .card{background:var(--c);border:1px solid var(--b);border-left:5px solid var(--m);border-radius:10px;padding:10px 12px;margin-bottom:10px}
 .card.TERANTAR{border-left-color:var(--ok)}.card.PENDING{border-left-color:var(--w)}.card.BATAL_SUPIR{border-left-color:var(--r)}
-.card.DIAMBIL{border-left-color:var(--ok)}
+.card.DIAMBIL{border-left-color:var(--p)}
 .top{display:flex;justify-content:space-between;gap:8px}
 .chip{font-size:12px;background:var(--bg);border-radius:10px;padding:2px 8px;white-space:nowrap;height:fit-content}
 .m{color:var(--m);font-size:13px;margin-top:2px}.amt{font-weight:700;font-size:17px;margin:6px 0}
@@ -56,6 +56,9 @@ dialog input,dialog select{width:100%;padding:12px;font-size:17px;margin-top:4px
 .sp{width:46px;height:46px;border:5px solid #fff4;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 .chk{width:22px;height:22px;margin:2px 10px 0 0}.top{align-items:flex-start}
 .sbar{position:fixed;left:0;right:0;bottom:50px;z-index:6;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--c);border-top:1px solid var(--b);padding:8px 12px}
+.fl{display:flex;gap:6px;margin-bottom:10px}.fl button{flex:1;border:1px solid var(--b);background:var(--c);color:var(--t);border-radius:8px;padding:9px 4px;font-size:13px}.fl button.on{background:var(--p);color:#fff;border-color:var(--p)}
+.gh{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:13px;color:var(--m);margin:14px 2px 6px}
+@media(max-width:420px){nav button{font-size:12px}}
 .sbar span{flex:1;font-weight:600}.sbar button{padding:10px 14px;border-radius:8px;border:1px solid var(--b);background:none;color:var(--t);font-weight:600}.sbar .pri{background:var(--p);color:#fff;border:0}
 </style></head><body>
 <div id="app"></div><nav id="nav"></nav><dialog id="dlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
@@ -74,7 +77,7 @@ const db=new Promise((res,rej)=>{const r=indexedDB.open('antar',1);r.onupgradene
 const kv={get:k=>db.then(d=>new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result)})),
  set:(k,v)=>db.then(d=>new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r})),
  del:k=>db.then(d=>new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=r}))};
-let S={username:'',user:null,invoice:[],rekap:[],ap:[],ab:[],dl:'',ob:{},up:null,tab:'tugas',bulan:'',pn:0,fq:[]};
+let S={username:'',user:null,invoice:[],rekap:[],ap:[],ab:[],dl:'',ob:{},up:null,tab:'tugas',bulan:'',pn:0,fq:[],sl:[],fs:'',sh:7};
 const save=()=>kv.set('S',S);
 
 // UI helper
@@ -112,7 +115,7 @@ async function undo(no){kv.del('foto:'+no);delete S.ob[no];await save();render()
 
 async function doDownload(pin){const d=await api({action:'download',username:S.username,pin});
  if(d.user.role!=='SUPIR'&&d.user.role!=='GUDANG'){toast('Akun ini tidak dapat dipakai di aplikasi HP.');return}
- S.supir=d.supir_aktif||[];SEL.clear();S.user=d.user;S.invoice=d.invoice;S.rekap=d.rekap;S.ap=d.alasan_pending;S.ab=d.alasan_batal;S.dl=d.server_time;S.pn=d.invoice.length;
+ S.supir=d.supir_aktif||[];SEL.clear();S.user=d.user;S.invoice=d.invoice;S.rekap=d.rekap;S.ap=d.alasan_pending;S.ab=d.alasan_batal;S.dl=d.server_time;S.pn=d.invoice.length;S.sl=d.selesai||[];S.sh=d.selesai_hari||7;
  Object.keys(S.ob).forEach(no=>{const i=S.invoice.find(x=>x.invoice_no===no);if(!i||i.versi!==S.ob[no].bv)delete S.ob[no]});
  await save();render()}
 async function download(){if(BZ)return;if(nOb()&&!confirm('Ada perubahan yang belum diupload. Download akan menjaga perubahan yang masih valid. Lanjutkan?'))return;
@@ -142,7 +145,7 @@ async function gantiPin(){const o=await ask('Ganti PIN',[{n:'pin',l:'PIN lama',t
  busy(1,'Mengganti PIN…');try{await api({action:'changePin',username:S.username,pin:o.pin,newPin:o.np});toast('PIN berhasil diganti')}catch(e){toast(e.message)}busy(0)}
 async function gantiAkun(){if(nOb())return toast('Upload dulu perubahan Anda sebelum ganti akun');
  if(!confirm('Ganti akun? Data lokal akan dihapus.'))return;
- S={...S,username:'',user:null,invoice:[],rekap:[],dl:'',ob:{},up:null,pn:0};await save();render()}
+ S={...S,username:'',user:null,invoice:[],rekap:[],dl:'',ob:{},up:null,pn:0,sl:[]};await save();render()}
 async function setUser(){const v=($('#un').value||'').trim().toLowerCase();if(!v)return;S.username=v;await save();render()}
 const months=()=>[...new Set([today().slice(0,7),...S.rekap.map(r=>r.tanggal.slice(0,7))])].sort().reverse();
 function mb(k){S.bulan=months()[k];render()}
@@ -194,9 +197,22 @@ function vGrekap(){const t=today(),A={};S.supir.forEach(s=>A[s.kode]={n:s.nama,h
  const K=Object.keys(A).sort(),T=K.reduce((a,k)=>({h:a.h+A[k].h,q:a.q+A[k].q,v:a.v+A[k].v}),{h:0,q:0,v:0});
  return `<table><thead><tr><th>Supir</th><th>Hari ini</th><th>Bulan ini</th><th>Nilai (Rp)</th></tr></thead><tbody>${K.map(k=>`<tr><td>${esc(A[k].n)}</td><td>${A[k].h}</td><td>${A[k].q}</td><td>${A[k].v.toLocaleString('id-ID')}</td></tr>`).join('')}</tbody>
  <tfoot><tr><td>TOTAL</td><td>${T.h}</td><td>${T.q}</td><td>${T.v.toLocaleString('id-ID')}</td></tr></tfoot></table><p class="m">Qty = invoice Terantar. Diperbarui saat Download (${esc(S.dl||'belum pernah')}).</p>`}
+const BL3=BLN.map(b=>b.slice(0,3));
+const tglId=d=>{const p=String(d||'').split('-');return p.length==3?(+p[2])+' '+BL3[p[1]-1]+' '+p[0]:esc(d)};
+function fsel(x){S.fs=x;render()}
+const scard=i=>{const dm=i.status==='DIAMBIL';
+ return `<div class="card ${dm?'DIAMBIL':'TERANTAR'}"><div class="top"><div style="flex:1"><b>${esc(i.pelanggan)}</b><div class="m">${esc(i.invoice_no)} · ${esc(i.tanggal)}${i.salesman?' · '+esc(i.salesman):''}</div></div><span class="chip">${dm?'🏪 Diambil toko':'🚚 Diantar'}</span></div>
+ <div class="amt">${rp(i.nominal)}</div><div class="m">${dm?esc(i.alasan||'Diambil di gudang'):'Supir: '+esc(i.supir_nama||i.kode_supir||'-')}</div></div>`};
+function vSelesai(){const all=S.sl,L=all.filter(i=>!S.fs||i.status===S.fs),c=s=>all.filter(i=>i.status===s).length;
+ const fl=`<div class="fl">${[['','Semua ('+all.length+')'],['TERANTAR','Diantar ('+c('TERANTAR')+')'],['DIAMBIL','Diambil toko ('+c('DIAMBIL')+')']].map(([k,l])=>`<button class="${S.fs===k?'on':''}" onclick="fsel('${k}')">${l}</button>`).join('')}</div>`;
+ if(!all.length)return fl+'<div class="empty">Belum ada data selesai.<br>Tekan <b>Download</b> saat online.</div>';
+ if(!L.length)return fl+'<div class="empty">Tidak ada data untuk filter ini.</div>';
+ const G={};L.forEach(i=>(G[i.tgl_antar]=G[i.tgl_antar]||[]).push(i));
+ return fl+Object.keys(G).sort().reverse().map(d=>{const a=G[d],v=a.reduce((x,i)=>x+i.nominal,0);
+  return `<div class="gh"><span>${tglId(d)} · ${a.length} invoice</span><span>${rp(v)}</span></div>`+a.map(scard).join('')}).join('')+`<p class="m">Data ${S.sh||7} hari terakhir menurut tanggal antar/ambil. Diperbarui saat Download (${esc(S.dl||'belum pernah')}).</p>`}
 const sbar=()=>isG()&&S.tab==='inv'&&SEL.size?`<div style="height:100px"></div><div class="sbar"><span>${SEL.size} dipilih</span><button onclick="gTerima()">Terima</button><button onclick="gAmbil()">🏪 Diambil toko</button><button class="pri" onclick="gTugas()">Tugaskan…</button></div>`:'';
-const vBody=()=>isG()?{inv:vInv,retur:vRetur,grekap:vGrekap,akun:vAkun}[S.tab]():S.tab==='rekap'?vRekap():S.tab==='akun'?vAkun():vTugas();
-const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.filter(i=>i.status==='BATAL_SUPIR').length?' ('+S.invoice.filter(i=>i.status==='BATAL_SUPIR').length+')':'')],['grekap','📊 Rekap'],['akun','👤 Akun']]:[['tugas','📋 Tugas'],['rekap','📊 Rekap'],['akun','👤 Akun']];
+const vBody=()=>isG()?{inv:vInv,retur:vRetur,selesai:vSelesai,grekap:vGrekap,akun:vAkun}[S.tab]():S.tab==='rekap'?vRekap():S.tab==='akun'?vAkun():vTugas();
+const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.filter(i=>i.status==='BATAL_SUPIR').length?' ('+S.invoice.filter(i=>i.status==='BATAL_SUPIR').length+')':'')],['selesai','✅ Selesai'],['grekap','📊 Rekap'],['akun','👤 Akun']]:[['tugas','📋 Tugas'],['rekap','📊 Rekap'],['akun','👤 Akun']];
 
 // tampilan
 function card(i){const e=eff(i),o=S.ob[i.invoice_no],a=ACT.includes(i.status),n=esc(i.invoice_no),al=o?o.alasan:(e!=='TERANTAR'?i.alasan:'');

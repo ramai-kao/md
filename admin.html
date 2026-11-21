@@ -28,6 +28,8 @@ button.b{padding:8px 12px;border:1px solid var(--b);border-radius:6px;background
 table{border-collapse:collapse;width:100%}th,td{padding:7px 10px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}th{background:var(--bg);position:sticky;top:0}
 td.n,th.n{text-align:right}.chip{padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg)}
 .TERANTAR{color:var(--ok)}.DIAMBIL{color:var(--ok)}.PENDING{color:var(--w)}.BATAL_SUPIR,.BATAL_TOTAL{color:var(--r)}
+td.k{background:#fff3b0;color:#5c4a00}td.mr{background:#ffc9c4;color:#7a1710}td.hj{background:#c9efd3;color:#14532d}
+td.k .chip,td.mr .chip,td.hj .chip{background:transparent;color:inherit;font-weight:600}
 .m{color:var(--m)}#login{max-width:320px;margin:12vh auto}#login input{width:100%;margin:6px 0 12px}
 dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);color:var(--t)}dialog label{display:block;margin:10px 0;font-size:12px;color:var(--m)}dialog input,dialog select{width:100%;margin-top:4px}
 .row{display:flex;gap:8px;margin-top:14px}.row button{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b);background:none;color:var(--t);cursor:pointer}.row .pri{background:var(--p);color:#fff;border:0}
@@ -75,6 +77,9 @@ function logout(){TK='';ME=null;sessionStorage.clear();D={rows:[],supir:[],batas
 $('#co').textContent=NAMA_PERUSAHAAN;
 async function start(){$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=ME.nama+' ('+ME.role+')';await load();go('dash')}
 async function load(){try{D=await api('aList',{dari:F.dari});}catch(e){toast(e.message)}}
+const AKTIF=['BARU','DITERIMA','DITUGASKAN','PENDING','BATAL_SUPIR'],SELESAI=['TERANTAR','DIAMBIL'],KUNING_HARI=1,MERAH_HARI=3;
+const umur=r=>Math.round((Date.parse(today())-Date.parse(r.tanggal))/864e5);
+function warnaSt(r){if(SELESAI.includes(r.status))return 'hj';if(!AKTIF.includes(r.status))return '';const u=umur(r);return u>MERAH_HARI?'mr':u>KUNING_HARI?'k':''}
 const sn=k=>{const s=D.supir.find(x=>x.kode===k);return s?s.nama:(k||'-')};
 const flt=()=>D.rows.filter(r=>r.tanggal>=F.dari&&r.tanggal<=F.sampai&&(!F.status||r.status===F.status)&&(!F.supir||(r.kode_supir||r.retur_dari)===F.supir)
  &&(!F.q||(r.pelanggan+' '+r.invoice_no+' '+r.salesman).toLowerCase().includes(F.q.toLowerCase())));
@@ -101,9 +106,9 @@ function pendingBox(){const P=D.rows.filter(r=>r.status==='PENDING').map(r=>({..
 function vInv(){const R=flt(),ex=`<label>Status<select id="fst"><option value="">Semua</option>${ST.map(s=>`<option ${F.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
  <label>Supir<select id="fsp"><option value="">Semua</option>${D.supir.map(s=>`<option value="${s.kode}" ${F.supir===s.kode?'selected':''}>${esc(s.nama)}</option>`).join('')}</select></label><label>Cari<input id="fq" value="${esc(F.q)}" placeholder="toko / no / salesman"></label>`;
  const can=D.rows.length&&['TERANTAR','PENDING','BATAL_SUPIR'];
- return `<h2 style="margin-top:0">Invoice <small class="m">(${R.length})</small></h2>${filterBar(ex)}<div class="bar"><button class="b" onclick="expInv()">⬇ Ekspor CSV (Excel)</button></div>
+ return `<h2 style="margin-top:0">Invoice <small class="m">(${R.length})</small></h2>${filterBar(ex)}<div class="bar"><button class="b" onclick="expInv()">⬇ Ekspor CSV (Excel)</button><span class="m">Warna status: <b style="background:#fff3b0;color:#5c4a00;padding:1px 6px;border-radius:4px">kuning</b> belum selesai &gt; ${KUNING_HARI} hari sejak tanggal invoice, <b style="background:#ffc9c4;color:#7a1710;padding:1px 6px;border-radius:4px">merah</b> &gt; ${MERAH_HARI} hari, <b style="background:#c9efd3;color:#14532d;padding:1px 6px;border-radius:4px">hijau</b> selesai (Terantar/Diambil)</span></div>
  <div class="tw"><table><thead><tr><th>Tanggal</th><th>Invoice</th><th>Toko</th><th>Salesman</th><th class="n">Nominal</th><th>Status</th><th>Supir</th><th>Tgl antar</th><th>Keterangan</th><th>Foto</th><th></th></tr></thead><tbody>
- ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${esc(r.alasan)}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
+ ${R.slice(0,500).map(r=>`<tr><td>${r.tanggal}</td><td>${esc(r.invoice_no)}</td><td>${esc(r.pelanggan)}</td><td>${esc(r.salesman)}</td><td class="n">${rp(r.nominal)}</td><td class="${warnaSt(r)}"><span class="chip ${r.status}">${r.status}</span>${r.catatan?' ⚠':''}</td><td>${esc(sn(r.kode_supir||r.retur_dari))}</td><td>${r.tgl_antar||''}</td><td>${esc(r.alasan)}</td><td>${r.foto?`<a href="${esc(r.foto)}" target="_blank">📷</a>`:''}</td>
  <td>${can.includes(r.status)?`<button class="b" onclick="koreksi('${esc(r.invoice_no)}')">Koreksi</button>`:''}</td></tr>`).join('')}</tbody></table></div>${R.length>500?'<p class="m">Menampilkan 500 pertama. Persempit filter atau ekspor CSV.</p>':''}`}
 function expInv(){csv('invoice.csv',['Tanggal','Invoice','Toko','Salesman','Nominal','Status','Supir','Tgl Antar','Alasan','Foto'],flt().map(r=>[r.tanggal,r.invoice_no,r.pelanggan,r.salesman,r.nominal,r.status,sn(r.kode_supir||r.retur_dari),r.tgl_antar,r.alasan,r.foto]))}
 async function koreksi(no){const r=D.rows.find(x=>x.invoice_no===no);if(!r)return;

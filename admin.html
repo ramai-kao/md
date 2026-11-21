@@ -1,12 +1,21 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DELIVERY SYSTEM</title>
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="favicon.svg"><link rel="apple-touch-icon" href="icon-192.png">
 <!-- Ganti API_URL dengan URL Web App yang sama seperti index.html. Upload file ini ke folder yang sama di GitHub, buka .../admin.html -->
 <style>
 :root{--bg:#f4f6f9;--c:#fff;--t:#1d2733;--m:#667788;--p:#1a73e8;--b:#dde3ea;--ok:#188038;--w:#e37400;--r:#d93025}
 @media(prefers-color-scheme:dark){:root{--bg:#10151b;--c:#1a222b;--t:#e8edf2;--m:#9aa7b4;--b:#2b3744}}
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--t)}
-#app{display:flex;min-height:100vh}aside{width:190px;background:var(--c);border-right:1px solid var(--b);padding:14px;position:sticky;top:0;height:100vh}
+:root{--hh:52px;--hg:#d6eedd;--ht:#1b4332;--hb:#b5dcc1}
+@media(prefers-color-scheme:dark){:root{--hg:#1f3a2b;--ht:#d3efdc;--hb:#2f5a43}}
+#app{min-height:100vh}#wrap{display:flex}
+aside{width:190px;background:var(--c);border-right:1px solid var(--b);padding:14px;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));align-self:flex-start}
+#top{position:sticky;top:0;z-index:20;height:var(--hh);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;background:var(--hg);color:var(--ht);border-bottom:1px solid var(--hb)}
+#top .l{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;min-width:0}#top .l svg{width:30px;height:30px;flex:none}
+#top .l span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#top .r{display:flex;align-items:center;gap:12px;font-size:14px;flex:none}
+#top .r button{padding:7px 14px;border:1px solid var(--hb);border-radius:6px;background:var(--c);color:var(--t);cursor:pointer;font-weight:600}
 aside h3{margin:0 0 14px}aside button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--t);padding:10px;border-radius:8px;font-size:14px;cursor:pointer}
 aside button.on{background:var(--p);color:#fff}main{flex:1;padding:18px;min-width:0}
 .card,.box{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px}
@@ -27,10 +36,11 @@ dialog{border:0;border-radius:12px;width:380px;padding:18px;background:var(--c);
 .sp{width:44px;height:44px;border:5px solid #fff4;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 </style></head><body>
 <div id="login"><h2>DELIVERY SYSTEM</h2><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b pri" style="width:100%" onclick="login()">Masuk</button><p id="le" style="color:var(--r)"></p></div>
-<div id="app" hidden><aside><h3>DELIVERY SYSTEM</h3><div id="nav"></div><p class="m" id="who"></p><button onclick="logout()">Keluar</button></aside><main id="main"></main></div>
+<div id="app" hidden><header id="top"><div class="l"><svg viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#2e9e5b"/><g transform="translate(7 -38)" fill="#fff"><rect x="200" y="340" width="360" height="300" rx="24"/><path d="M580 420H730L810 520V640H580Z"/><path d="M610 452H708L762 520H610Z" fill="#2e9e5b"/><g stroke="#2e9e5b" stroke-width="22"><circle cx="340" cy="680" r="73"/><circle cx="700" cy="680" r="73"/></g><circle cx="340" cy="680" r="62"/><circle cx="700" cy="680" r="62"/><g fill="#2e9e5b"><circle cx="340" cy="680" r="24"/><circle cx="700" cy="680" r="24"/></g></g></svg><span id="co"></span></div><div class="r"><span id="who"></span><button onclick="keluar()">Keluar</button></div></header><div id="wrap"><aside><div id="nav"></div></aside><main id="main"></main></div></div>
 <dialog id="dlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
+const NAMA_PERUSAHAAN='CV. RAMAI';   // <-- ganti dengan nama perusahaan Anda
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rp=n=>Number(n).toLocaleString('id-ID');
@@ -57,7 +67,12 @@ function csv(name,head,rows){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'"
 async function login(){$('#le').textContent='';busy(1,'Masuk…');try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'adminLogin',username:$('#lu').value,password:$('#lp').value})});
  const j=await r.json();if(!j.ok)throw new Error(j.message);TK=j.data.token;ME=j.data.user;sessionStorage.setItem('tk',TK);sessionStorage.setItem('me',JSON.stringify(ME));start()}
  catch(e){$('#le').textContent=e.message||'Gagal terhubung'}finally{busy(0)}}
+function konfirm(title,msg,ya,tidak){return new Promise(r=>{const d=$('#dlg');
+ d.innerHTML=`<form method="dialog"><h3 style="margin:0">${title}</h3><p class="m">${msg}</p><div class="row"><button value="cancel">${tidak}</button><button value="ok" class="pri">${ya}</button></div></form>`;
+ d.returnValue='';d.onclose=()=>r(d.returnValue==='ok');d.showModal()})}
+async function keluar(){if(await konfirm('Keluar dari aplikasi?','Anda akan keluar dari sesi ini. Pilih "Lanjut bekerja" jika masih ingin memakai aplikasi.','Ya, keluar','Lanjut bekerja'))logout()}
 function logout(){TK='';ME=null;sessionStorage.clear();D={rows:[],supir:[],batas:7};REK=[];USR=[];$('#main').innerHTML='';$('#nav').innerHTML='';$('#who').textContent='';$('#lp').value='';$('#app').hidden=true;$('#login').hidden=false}
+$('#co').textContent=NAMA_PERUSAHAAN;
 async function start(){$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=ME.nama+' ('+ME.role+')';await load();go('dash')}
 async function load(){try{D=await api('aList',{dari:F.dari});}catch(e){toast(e.message)}}
 const sn=k=>{const s=D.supir.find(x=>x.kode===k);return s?s.nama:(k||'-')};

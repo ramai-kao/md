@@ -108,12 +108,12 @@ function expRek(){csv('rekap_'+RB+'.csv',['Tanggal','Kode','Supir','Qty','Nilai'
 function vUsr(){return `<h2 style="margin-top:0">User & Supir</h2><h3>Akun login</h3><div class="tw"><table><thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
  ${USR.map(u=>`<tr><td>${esc(u.username)}</td><td>${esc(u.nama)}</td><td>${u.role}</td><td>${u.status}${u.terkunci?' 🔒':''}</td><td>
  ${u.role!=='SUPIR'?`<button class="b" onclick="setSt('user','${esc(u.username)}','${u.status==='Aktif'?'Nonaktif':'Aktif'}')">${u.status==='Aktif'?'Nonaktifkan':'Aktifkan'}</button> `:''}
- <button class="b" onclick="reset('${esc(u.username)}','${u.role}')">Reset ${u.role==='ADMIN'||u.role==='SPV'?'password':'PIN'}</button></td></tr>`).join('')}</tbody></table></div>
+ <button class="b" onclick="reset('${esc(u.username)}','${u.role}')">Reset ${u.role==='ADMIN'||u.role==='OM'?'password':'PIN'}</button></td></tr>`).join('')}</tbody></table></div>
  <h3>Supir (MASTER_SUPIR)</h3><div class="tw"><table><thead><tr><th>Kode</th><th>Nama</th><th>Status</th><th></th></tr></thead><tbody>${D.supir.map(s=>`<tr><td>${s.kode}</td><td>${esc(s.nama)}</td><td>${s.status}</td><td><button class="b" onclick="setSt('supir','${s.kode}','${s.status==='Aktif'?'Nonaktif':'Aktif'}')">${s.status==='Aktif'?'Nonaktifkan':'Aktifkan'}</button></td></tr>`).join('')}</tbody></table></div>
  <p class="m">Menonaktifkan supir: invoice Ditugaskan/Pending miliknya otomatis masuk Retur Gudang. Reset PIN/password juga membuka kunci akun. Menambah user/supir baru: isi langsung di sheet USERS / MASTER_SUPIR.</p>`}
 async function setSt(kind,key,status){if(!confirm(status+': '+key+'?'))return;
  try{await api('aSetStatus',{kind,key,status});toast('Tersimpan');await load();draw()}catch(e){toast(e.message)}}
-async function reset(u,role){const adm=role==='ADMIN'||role==='SPV';const o=await ask('Reset '+(adm?'password':'PIN')+': '+esc(u),[{n:'s',l:adm?'Password baru (min. 8 karakter)':'PIN baru (4 digit)',t:'password'}]);if(!o)return;
+async function reset(u,role){const adm=role==='ADMIN'||role==='OM';const o=await ask('Reset '+(adm?'password':'PIN')+': '+esc(u),[{n:'s',l:adm?'Password baru (min. 8 karakter)':'PIN baru (4 digit)',t:'password'}]);if(!o)return;
  try{await api('aResetSecret',{username:u,secret:o.s});toast('Berhasil direset')}catch(e){toast(e.message)}}
 $('#lp').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 if(TK&&ME)start();

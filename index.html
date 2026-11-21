@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1a73e8">
+<meta name="theme-color" content="#1f8a4c">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="favicon.svg"><link rel="apple-touch-icon" href="icon-192.png">
 <title>Delivery System</title>
@@ -11,7 +11,7 @@
          3) buka di Chrome Android > menu > "Instal aplikasi"
 -->
 <style>
-:root{--bg:#f5f7fa;--c:#fff;--t:#1d2733;--m:#667788;--p:#1a73e8;--ok:#188038;--w:#e37400;--r:#d93025;--b:#dde3ea}
+:root{--bg:#f5f7fa;--c:#fff;--t:#1d2733;--m:#667788;--p:#1f8a4c;--ok:#188038;--w:#e37400;--r:#d93025;--b:#dde3ea}
 @media(prefers-color-scheme:dark){:root{--bg:#10151b;--c:#1a222b;--t:#e8edf2;--m:#9aa7b4;--b:#2b3744}}
 *{box-sizing:border-box}
 body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--t);padding-bottom:64px}
@@ -60,10 +60,24 @@ dialog input,dialog select{width:100%;padding:12px;font-size:17px;margin-top:4px
 .gh{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:13px;color:var(--m);margin:14px 2px 6px}
 @media(max-width:420px){nav button{font-size:12px}}
 .sbar span{flex:1;font-weight:600}.sbar button{padding:10px 14px;border-radius:8px;border:1px solid var(--b);background:none;color:var(--t);font-weight:600}.sbar .pri{background:var(--p);color:#fff;border:0}
+
+.srch{width:100%;padding:11px 12px;font-size:15px;margin-bottom:10px;border:1px solid var(--b);border-radius:10px;background:var(--c);color:var(--t)}
+.bd{display:inline-block;min-width:20px;margin-left:6px;padding:1px 6px;border-radius:10px;background:#e37400;color:#fff;font-size:12px;font-weight:700}
+.hb button.pend{box-shadow:0 0 0 3px rgba(255,170,60,.7)}
+header small.wn{display:inline-block;background:#fff3cd;color:#664d03;border-radius:6px;padding:2px 8px;opacity:1}
+.hl{display:flex;align-items:center;gap:8px}.hl svg{width:26px;height:26px;flex:none}
+.wl{min-height:calc(100vh - 84px);display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#e4f6ec,#d3eef4);margin:-10px;padding:20px}
+@media(prefers-color-scheme:dark){.wl{background:linear-gradient(160deg,#17382c,#173646)}}
+.wc{background:var(--c);border:1px solid var(--b);border-radius:16px;padding:26px 22px;width:min(92vw,360px);text-align:center;box-shadow:0 10px 30px rgba(31,138,76,.18)}
+.wc svg.wg{width:76px;height:76px;filter:drop-shadow(0 4px 10px rgba(31,138,76,.35))}
+.wc .cn{margin-top:12px;font-size:19px;font-weight:700}.wc .ds{margin:4px 0 20px;font-size:12px;font-weight:700;letter-spacing:.3em;color:var(--p)}
+.wc label{display:block;text-align:left;margin:8px 0;font-size:13px;color:var(--m)}
 </style></head><body>
 <div id="app"></div><nav id="nav"></nav><dialog id="dlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
+const NAMA_PERUSAHAAN='CV. RAMAI';   // <-- ganti dengan nama perusahaan Anda
+const LOGO=c=>`<svg class="${c}" viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#2e9e5b"/><g transform="translate(7 -38)" fill="#fff"><rect x="200" y="340" width="360" height="300" rx="24"/><path d="M580 420H730L810 520V640H580Z"/><path d="M610 452H708L762 520H610Z" fill="#2e9e5b"/><g stroke="#2e9e5b" stroke-width="22"><circle cx="340" cy="680" r="73"/><circle cx="700" cy="680" r="73"/></g><circle cx="340" cy="680" r="62"/><circle cx="700" cy="680" r="62"/><g fill="#2e9e5b"><circle cx="340" cy="680" r="24"/><circle cx="700" cy="680" r="24"/></g></g></svg>`;
 const $=s=>document.querySelector(s);
 const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const LBL={DITUGASKAN:'Belum diantar',PENDING:'Pending',TERANTAR:'Terantar',BATAL_SUPIR:'Batal'};
@@ -149,7 +163,7 @@ async function gantiAkun(){if(nOb())return toast('Upload dulu perubahan Anda seb
 async function setUser(){const v=($('#un').value||'').trim().toLowerCase();if(!v)return;S.username=v;await save();render()}
 const months=()=>[...new Set([today().slice(0,7),...S.rekap.map(r=>r.tanggal.slice(0,7))])].sort().reverse();
 function mb(k){S.bulan=months()[k];render()}
-const tab=t=>{S.tab=t;render()};
+const tab=t=>{S.tab=t;S.q='';render()};
 
 // ===== GUDANG =====
 const SEL=new Set(),GL={BARU:'Baru',DITERIMA:'Diterima',DIAMBIL:'Diambil toko'};
@@ -158,7 +172,7 @@ const gi=no=>S.invoice.find(i=>i.invoice_no===no);
 const canA=i=>['BARU','DITERIMA'].includes(i.status)&&(!S.ob[i.invoice_no]||S.ob[i.invoice_no].op==='TERIMA');
 const opL=o=>({TERIMA:'✓ Diterima',TUGASKAN:'→ '+o.nm,TUGASKAN_ULANG:'→ '+o.nm+' (ulang)',BATAL_TOTAL:'🚫 Batal total',AMBIL_GUDANG:'🏪 Diambil toko'}[o.op]);
 function tg(no){SEL.has(no)?SEL.delete(no):SEL.add(no);render()}
-function pilihSemua(){const L=S.invoice.filter(canA),all=L.every(i=>SEL.has(i.invoice_no));L.forEach(i=>all?SEL.delete(i.invoice_no):SEL.add(i.invoice_no));render()}
+function pilihSemua(){const L=gL().filter(canA),all=L.every(i=>SEL.has(i.invoice_no));L.forEach(i=>all?SEL.delete(i.invoice_no):SEL.add(i.invoice_no));render()}
 async function pilihSupir(t){if(!S.supir.length){toast('Daftar supir kosong. Download dulu.');return null}
  const o=await ask(t,[{n:'s',l:'Pilih supir (hanya yang Aktif)',opts:S.supir.map(s=>s.kode+' - '+s.nama)}]);if(!o)return null;
  const k=o.s.split(' - ');return{kode:k[0],nm:k.slice(1).join(' - ')}}
@@ -188,9 +202,11 @@ function gcard(i){const o=S.ob[i.invoice_no],n=esc(i.invoice_no),ret=i.status===
  <div class="amt">${rp(i.nominal)}</div>${ret?`<div class="m">Dari ${esc(i.retur_dari)} · Alasan: ${esc(i.alasan)}</div>`:''}${i.note?`<div class="err">${esc(i.note)}</div>`:''}
  ${o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`:ret?`<div class="acts"><button class="ok" onclick="gRetur('${n}','TUGASKAN_ULANG')">Tugaskan ulang</button><button class="rd" onclick="gRetur('${n}','BATAL_TOTAL')">Batal total</button></div>`:''}</div>`}
 const banG=()=>S.pn>S.invoice.length?`<div class="ban">📦 Ada invoice baru/retur di server (${S.pn}). Silakan <b>Download</b>.</div>`:'';
-function vInv(){const L=S.invoice.filter(i=>i.status!=='BATAL_SUPIR'&&i.status!=='DIAMBIL');
- if(!L.length)return banG()+'<div class="empty">Tidak ada invoice baru.<br>Tekan <b>Download</b> saat online.</div>';
- return banG()+`<div class="bar"><b>${L.length} invoice</b><button onclick="pilihSemua()">Pilih semua</button></div>`+L.map(gcard).join('')}
+const mq=i=>!S.q||(i.pelanggan+' '+i.invoice_no+' '+(i.salesman||'')).toLowerCase().includes(S.q.toLowerCase());
+const gL=()=>S.invoice.filter(i=>i.status!=='BATAL_SUPIR'&&i.status!=='DIAMBIL'&&mq(i));
+const gList=()=>{const L=gL();return L.length?`<div class="bar"><b>${L.length} invoice</b><button onclick="pilihSemua()">Pilih semua</button></div>`+L.map(gcard).join(''):'<div class="empty">'+(S.q?'Tidak ada invoice yang cocok.':'Tidak ada invoice baru.<br>Tekan <b>Download</b> saat online.')+'</div>'};
+function cariG(v){S.q=v;$('#lst').innerHTML=gList()}
+function vInv(){return banG()+(S.invoice.some(i=>i.status!=='BATAL_SUPIR'&&i.status!=='DIAMBIL')?`<input class="srch" type="search" placeholder="🔍 Cari toko / no. invoice / salesman" value="${esc(S.q||'')}" oninput="cariG(this.value)">`:'')+`<div id="lst">${gList()}</div>`}
 function vRetur(){const L=S.invoice.filter(i=>i.status==='BATAL_SUPIR');return banG()+(L.length?L.map(gcard).join(''):'<div class="empty">Tidak ada invoice retur.</div>')}
 function vGrekap(){const t=today(),A={};S.supir.forEach(s=>A[s.kode]={n:s.nama,h:0,q:0,v:0});
  S.rekap.forEach(r=>{const a=A[r.kode_supir]=A[r.kode_supir]||{n:r.nama,h:0,q:0,v:0};if(r.tanggal===t)a.h+=r.qty;a.q+=r.qty;a.v+=r.nilai});
@@ -222,12 +238,13 @@ function card(i){const e=eff(i),o=S.ob[i.invoice_no],a=ACT.includes(i.status),n=
  ${a?(o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`
  :`<div class="acts"><button class="ok" onclick="st('${n}','TERANTAR')">✅ Terantar</button><button class="wr" onclick="st('${n}','PENDING')">⏳ Pending</button><button class="rd" onclick="st('${n}','BATAL_SUPIR')">❌ Batal</button></div>`):''}</div>`}
 
+const tList=()=>{const L=[...S.invoice].filter(mq).sort((a,b)=>(ACT.includes(eff(b))-ACT.includes(eff(a)))||a.pelanggan.localeCompare(b.pelanggan));return L.length?L.map(card).join(''):'<div class="empty">Tidak ada tugas yang cocok.</div>'};
+function cariT(v){S.q=v;$('#lst').innerHTML=tList()}
 function vTugas(){const L=S.invoice;if(!L.length)return '<div class="empty">Belum ada tugas.<br>Tekan <b>Download</b> saat online.</div>';
  const c=s=>L.filter(i=>eff(i)===s).length;
  const act=L.filter(i=>ACT.includes(i.status)).length;
  const ban=S.pn>act?`<div class="ban">📦 Ada tugas baru (${S.pn} aktif di server). Silakan <b>Download</b>.</div>`:'';
- const sorted=[...L].sort((a,b)=>(ACT.includes(eff(b))-ACT.includes(eff(a)))||a.pelanggan.localeCompare(b.pelanggan));
- return ban+`<div class="sum"><div><b>${L.length}</b>Total</div><div><b>${c('DITUGASKAN')}</b>Belum</div><div><b>${c('TERANTAR')}</b>Terantar</div><div><b>${c('PENDING')}</b>Pending</div><div><b>${c('BATAL_SUPIR')}</b>Batal</div></div>`+sorted.map(card).join('')}
+ return ban+`<div class="sum"><div><b>${L.length}</b>Total</div><div><b>${c('DITUGASKAN')}</b>Belum</div><div><b>${c('TERANTAR')}</b>Terantar</div><div><b>${c('PENDING')}</b>Pending</div><div><b>${c('BATAL_SUPIR')}</b>Batal</div></div><input class="srch" type="search" placeholder="🔍 Cari toko / no. invoice" value="${esc(S.q||'')}" oninput="cariT(this.value)"><div id="lst">${tList()}</div>`}
 
 function vRekap(){const ms=months(),b=ms.includes(S.bulan)?S.bulan:ms[0],k=ms.indexOf(b),[y,m]=b.split('-');
  const R=S.rekap.filter(r=>r.tanggal.startsWith(b)).sort((a,c)=>a.tanggal<c.tanggal?-1:1);
@@ -243,11 +260,11 @@ function vAkun(){return `<div class="box"><b>${esc(S.user?S.user.nama:'-')}</b><
  <button onclick="gantiPin()">🔑 Ganti PIN</button><button onclick="gantiAkun()">Ganti akun</button></div>`}
 
 function render(){const A=$('#app'),N=$('#nav'),y=scrollY;if(!TABS().some(t=>t[0]===S.tab))S.tab=TABS()[0][0];
- if(!S.username){N.innerHTML='';A.innerHTML=`<main><div class="box"><h3 style="margin-top:0">Selamat datang</h3><label>Masukkan username Anda (dari admin)<input id="un" style="width:100%;padding:12px;font-size:17px;margin-top:6px" autocapitalize="none" autocomplete="off"></label><div class="row"><button class="pri" onclick="setUser()">Simpan</button></div></div></main>`;return}
+ if(!S.username){N.innerHTML='';A.innerHTML=`<main class="wl"><div class="wc">${LOGO('wg')}<div class="cn">${esc(NAMA_PERUSAHAAN)}</div><div class="ds">DELIVERY SYSTEM</div><label>Masukkan username Anda (dari admin)<input id="un" style="width:100%;padding:12px;font-size:17px;margin-top:6px" autocapitalize="none" autocomplete="off" onkeydown="if(event.key==='Enter')setUser()"></label><div class="row"><button class="pri" onclick="setUser()">Simpan</button></div></div></main>`;return}
  const on=navigator.onLine,n=nOb();
- A.innerHTML=`<header><div class="r1"><b>${esc(S.user?S.user.nama:S.username)}</b><span><span class="dot ${on?'on':''}"></span>${on?'Online':'Offline'}</span></div>
- <div class="hb"><button onclick="download()">⬇ Download</button><button onclick="upload()">⬆ Upload${n?' ('+n+')':''}</button></div>
- <small>${n?n+' perubahan belum diupload':'Semua perubahan sudah terupload'}</small></header>
+ A.innerHTML=`<header><div class="r1"><span class="hl">${LOGO('lg')}<b>${esc(S.user?S.user.nama:S.username)}</b></span><span><span class="dot ${on?'on':''}"></span>${on?'Online':'Offline'}</span></div>
+ <div class="hb"><button onclick="download()">⬇ Download</button><button class="${n?'pend':''}" onclick="upload()">⬆ Upload${n?`<span class="bd">${n}</span>`:''}</button></div>
+ <small class="${n?'wn':''}">${n?'⚠ '+n+' perubahan belum diupload':'✓ Semua perubahan sudah terupload'}</small></header>
  <main>${vBody()}</main>${sbar()}`;
  N.innerHTML=TABS().map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="tab('${k}')">${l}</button>`).join('');scrollTo(0,y)}
 

@@ -30,6 +30,9 @@ button{font:inherit;cursor:pointer}button:disabled{opacity:.4}
 .chip{font-size:12px;background:var(--bg);border-radius:10px;padding:2px 8px;white-space:nowrap;height:fit-content}
 .m{color:var(--m);font-size:13px;margin-top:2px}.amt{font-weight:700;font-size:17px;margin:6px 0}
 .err{color:var(--r);font-size:13px;margin:4px 0}
+.rt{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
+.aksi{border:0;border-radius:8px;background:var(--p);color:#fff;font-weight:600;padding:9px 16px}
+.ak{display:flex;flex-direction:column;gap:12px;margin:14px 0 4px}.ak button{border:0;border-radius:10px;padding:16px;color:#fff;font-size:16px;font-weight:600;text-align:left}
 .acts{display:flex;gap:6px}.acts button{flex:1;border:0;border-radius:8px;padding:12px 4px;color:#fff;font-weight:600}
 .ok{background:var(--ok)}.wr{background:var(--w)}.rd{background:var(--r)}
 .ghost{width:100%;background:none;border:1px solid var(--b);color:var(--t);border-radius:8px;padding:10px}
@@ -76,7 +79,7 @@ header small.wn{display:inline-block;background:#fff3cd;color:#664d03;border-rad
 <div id="app"></div><nav id="nav"></nav><dialog id="dlg"></dialog><div id="toast"></div><div id="busy" role="alert" aria-live="assertive"><div class="sp"></div><div id="bm">Memproses…</div></div>
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbz63OEf3-mBfURnqA70S9byaxEkw-3I84JuB5eW79IOP-2CiU7qbPrv8yQtFpsJSlqt/exec';
-const NAMA_PERUSAHAAN='CV. RAMAI';   // <-- ganti dengan nama perusahaan Anda
+const NAMA_PERUSAHAAN='NAMA PERUSAHAAN';   // <-- ganti dengan nama perusahaan Anda
 const LOGO=c=>`<svg class="${c}" viewBox="0 0 1024 1024" aria-hidden="true"><rect width="1024" height="1024" rx="230" fill="#2e9e5b"/><g transform="translate(7 -38)" fill="#fff"><rect x="200" y="340" width="360" height="300" rx="24"/><path d="M580 420H730L810 520V640H580Z"/><path d="M610 452H708L762 520H610Z" fill="#2e9e5b"/><g stroke="#2e9e5b" stroke-width="22"><circle cx="340" cy="680" r="73"/><circle cx="700" cy="680" r="73"/></g><circle cx="340" cy="680" r="62"/><circle cx="700" cy="680" r="62"/><g fill="#2e9e5b"><circle cx="340" cy="680" r="24"/><circle cx="700" cy="680" r="24"/></g></g></svg>`;
 const $=s=>document.querySelector(s);
 const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -227,16 +230,20 @@ function vSelesai(){const all=S.sl,L=all.filter(i=>!S.fs||i.status===S.fs),c=s=>
  return fl+Object.keys(G).sort().reverse().map(d=>{const a=G[d],v=a.reduce((x,i)=>x+i.nominal,0);
   return `<div class="gh"><span>${tglId(d)} · ${a.length} invoice</span><span>${rp(v)}</span></div>`+a.map(scard).join('')}).join('')+`<p class="m">Data ${S.sh||7} hari terakhir menurut tanggal antar/ambil. Diperbarui saat Download (${esc(S.dl||'belum pernah')}).</p>`}
 const sbar=()=>isG()&&S.tab==='inv'&&SEL.size?`<div style="height:100px"></div><div class="sbar"><span>${SEL.size} dipilih</span><button onclick="gTerima()">Terima</button><button onclick="gAmbil()">🏪 Diambil toko</button><button class="pri" onclick="gTugas()">Tugaskan…</button></div>`:'';
-const vBody=()=>isG()?{inv:vInv,retur:vRetur,selesai:vSelesai,grekap:vGrekap,akun:vAkun}[S.tab]():S.tab==='rekap'?vRekap():S.tab==='akun'?vAkun():vTugas();
-const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.filter(i=>i.status==='BATAL_SUPIR').length?' ('+S.invoice.filter(i=>i.status==='BATAL_SUPIR').length+')':'')],['selesai','✅ Selesai'],['grekap','📊 Rekap'],['akun','👤 Akun']]:[['tugas','📋 Tugas'],['rekap','📊 Rekap'],['akun','👤 Akun']];
+const vBody=()=>isG()?{inv:vInv,retur:vRetur,selesai:vSelesai,grekap:vGrekap,akun:vAkun}[S.tab]():S.tab==='rekap'?vRekap():S.tab==='selesai'?vSelesaiS():S.tab==='akun'?vAkun():vTugas();
+const TABS=()=>isG()?[['inv','📦 Invoice'],['retur','↩ Retur'+(S.invoice.filter(i=>i.status==='BATAL_SUPIR').length?' ('+S.invoice.filter(i=>i.status==='BATAL_SUPIR').length+')':'')],['selesai','✅ Selesai'],['grekap','📊 Rekap'],['akun','👤 Akun']]:[['tugas','📋 Tugas'],['selesai','✅ Selesai'],['rekap','📊 Rekap'],['akun','👤 Akun']];
 
 // tampilan
 function card(i){const e=eff(i),o=S.ob[i.invoice_no],a=ACT.includes(i.status),n=esc(i.invoice_no),al=o?o.alasan:(e!=='TERANTAR'?i.alasan:'');
- return `<div class="card ${e}"><div class="top"><b>${esc(i.pelanggan)}</b><span class="chip">${LBL[e]||e}${o?(o.f?' 📷':'')+' •':''}</span></div>
- <div class="m">${n} · ${esc(i.tanggal)}${i.salesman?' · '+esc(i.salesman):''}</div><div class="amt">${rp(i.nominal)}</div>
+ return `<div class="card ${e}"><div class="top"><div style="flex:1;min-width:0"><b>${esc(i.pelanggan)}</b><div class="m">${n} · ${esc(i.tanggal)}${i.salesman?' · '+esc(i.salesman):''}</div><div class="amt">${rp(i.nominal)}</div></div>
+ <div class="rt"><span class="chip">${LBL[e]||e}${o?(o.f?' 📷':'')+' •':''}</span>${a&&!o?`<button class="aksi" onclick="aksi('${n}')">Aksi ▾</button>`:''}</div></div>
  ${al?`<div class="m">Alasan: ${esc(al)}</div>`:''}${i.note?`<div class="err">${esc(i.note)}</div>`:''}
- ${a?(o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`
- :`<div class="acts"><button class="ok" onclick="st('${n}','TERANTAR')">✅ Terantar</button><button class="wr" onclick="st('${n}','PENDING')">⏳ Pending</button><button class="rd" onclick="st('${n}','BATAL_SUPIR')">❌ Batal</button></div>`):''}</div>`}
+ ${a&&o?`<button class="ghost" onclick="undo('${n}')">↩ Ubah (belum diupload)</button>`:''}</div>`}
+function aksi(no){const i=S.invoice.find(x=>x.invoice_no===no);if(!i)return;const d=$('#dlg');
+ d.innerHTML=`<form method="dialog"><h3 style="margin:0 0 4px">Pilih tindakan</h3><div class="m">${esc(i.pelanggan)}<br>${esc(no)} · ${rp(i.nominal)}</div>
+ <div class="ak"><button value="TERANTAR" class="ok">✅ Terantar</button><button value="PENDING" class="wr">⏳ Pending (antar besok)</button><button value="BATAL_SUPIR" class="rd">❌ Batal (kembali ke gudang)</button></div>
+ <div class="row"><button value="cancel" formnovalidate autofocus>Tutup</button></div></form>`;
+ d.returnValue='';d.onclose=()=>{const v=d.returnValue;if(v&&v!=='cancel')setTimeout(()=>st(no,v),0)};d.showModal()}
 
 const tList=()=>{const L=[...S.invoice].filter(mq).sort((a,b)=>(ACT.includes(eff(b))-ACT.includes(eff(a)))||a.pelanggan.localeCompare(b.pelanggan));return L.length?L.map(card).join(''):'<div class="empty">Tidak ada tugas yang cocok.</div>'};
 function cariT(v){S.q=v;$('#lst').innerHTML=tList()}
@@ -255,6 +262,13 @@ function vRekap(){const ms=months(),b=ms.includes(S.bulan)?S.bulan:ms[0],k=ms.in
  </tbody><tfoot><tr><td>TOTAL</td><td>${q}</td><td>${v.toLocaleString('id-ID')}</td></tr></tfoot></table>
  <p class="m">Hanya invoice Terantar. Diperbarui saat Download/Upload (${esc(S.dl||'belum pernah')}).</p>`}
 
+const sdCard=i=>`<div class="card TERANTAR"><div class="top"><div style="flex:1;min-width:0"><b>${esc(i.pelanggan)}</b><div class="m">${esc(i.invoice_no)} · ${esc(i.tanggal)}${i.salesman?' · '+esc(i.salesman):''}</div></div><span class="chip">🚚 Terantar</span></div><div class="amt">${rp(i.nominal)}</div></div>`;
+const sdList=()=>{const L=S.sl.filter(mq);if(!L.length)return '<div class="empty">'+(S.q?'Tidak ada yang cocok.':'Belum ada pengantaran selesai.<br>Tekan <b>Download</b> saat online.')+'</div>';
+ const G={};L.forEach(i=>(G[i.tgl_antar]=G[i.tgl_antar]||[]).push(i));
+ return Object.keys(G).sort().reverse().map(d=>{const a=G[d],v=a.reduce((x,i)=>x+i.nominal,0);return `<div class="gh"><span>${tglId(d)} · ${a.length} invoice</span><span>${rp(v)}</span></div>`+a.map(sdCard).join('')}).join('')};
+function cariS(v){S.q=v;$('#lst').innerHTML=sdList()}
+function vSelesaiS(){const t=S.sl.length,v=S.sl.reduce((x,i)=>x+i.nominal,0);
+ return `<div class="sum"><div><b>${t}</b>Invoice terantar</div><div><b>${rp(v)}</b>Total nilai</div></div><input class="srch" type="search" placeholder="🔍 Cari toko / no. invoice" value="${esc(S.q||'')}" oninput="cariS(this.value)"><div id="lst">${sdList()}</div><p class="m">Riwayat ${S.sh||7} hari terakhir menurut tanggal antar. Diperbarui saat Download (${esc(S.dl||'belum pernah')}).</p>`}
 function vAkun(){return `<div class="box"><b>${esc(S.user?S.user.nama:'-')}</b><div class="m">Username: ${esc(S.username)}${S.user&&S.user.kode_supir?' · Kode: '+esc(S.user.kode_supir):''}</div>
  <div class="m">Download terakhir: ${esc(S.dl||'belum pernah')}</div><div class="m">Belum diupload: ${nOb()} perubahan</div>
  <button onclick="gantiPin()">🔑 Ganti PIN</button><button onclick="gantiAkun()">Ganti akun</button></div>`}
